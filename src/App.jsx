@@ -2,9 +2,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import './App.css'
 import { AuroraBackdrop } from './components/AuroraBackdrop'
-import { CursorRipples } from './components/CursorRipples'
-import { NetworkNebula } from './components/NetworkNebula'
 import { SignalField } from './components/SignalField'
+import { WaterSurface } from './components/WaterSurface'
 import {
   featuredProjects,
   introStats,
@@ -57,18 +56,18 @@ function Hero() {
   return (
     <section className="hero" id="top">
       <div className="hero-copy">
-        <p className="eyebrow">Rongze Gao · Personal Lab</p>
-        <h1>Hi, I am Rongze. I build AI systems that stay useful beyond demos.</h1>
+        <p className="eyebrow">Rongze Gao · Personal Site</p>
+        <h1>I build AI systems, tools, and interfaces that hold up in real use.</h1>
         <p className="hero-body">
-          信息系统与人工智能是我的主线。这个主页不堆太多文字，而是用交互和项目让你先直观感受，
-          再按兴趣深入细看技术细节。
+          我在做的是信息系统与人工智能，也喜欢把复杂技术做得更可用、更自然。
+          这个主页先给你感觉，再给你结构，最后再给你细节。
         </p>
 
         <div className="hero-actions">
-          <a href="#/projects">Start with projects</a>
-          <a href="#/tracks">Choose a track</a>
+          <a href="#/projects">View projects</a>
+          <a href="#/tracks">Explore tracks</a>
           <a href={siteLinks.github} target="_blank" rel="noreferrer">
-            Open GitHub
+            GitHub
           </a>
         </div>
 
@@ -89,20 +88,20 @@ function Hero() {
           className="hero-panel panel-primary"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
+          transition={{ duration: 0.6, delay: 0.18 }}
         >
-          <span>Core direction</span>
-          <strong>Information Systems + AI</strong>
-          <p>Agent systems, quant tools, embodied intelligence, and applied research.</p>
+          <span>Focus</span>
+          <strong>Information Systems and Artificial Intelligence</strong>
+          <p>Agent systems, quant tools, embodied AI, and applied research.</p>
         </motion.div>
         <motion.div
           className="hero-panel panel-secondary"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.35 }}
+          transition={{ duration: 0.6, delay: 0.32 }}
         >
-          <span>Interaction hint</span>
-          <p>Move the cursor, click, and hover cards. The page responds in real time.</p>
+          <span>Browse</span>
+          <p>Start with projects if you want signal fast, or use tracks for role-specific framing.</p>
         </motion.div>
         <div className="hero-tags">
           <span>Agent Systems</span>
@@ -115,43 +114,23 @@ function Hero() {
   )
 }
 
-function PlaygroundSection() {
-  return (
-    <MotionSection
-      className="content-section"
-      initial={{ opacity: 0, y: 22 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.2 }}
-    >
-      <SectionHeading
-        eyebrow="Interactive Playground"
-        title="Distributed network field"
-        body="A live simulation where nodes self-organize and react to your pointer, inspired by how real systems evolve under shifting signals."
-      />
-      <div className="nebula-shell interactive-card">
-        <NetworkNebula />
-      </div>
-    </MotionSection>
-  )
-}
-
 function QuickEntry() {
   const cards = [
     {
-      title: 'Track Mode',
-      body: 'Role-based view for AI, quant, robotics, and healthcare paths.',
-      href: '#/tracks',
-      cta: 'Open tracks',
-    },
-    {
-      title: 'Project Mode',
-      body: 'Technical depth: architecture, contributions, and outcomes.',
+      title: 'Projects',
+      body: 'Technical depth, architecture, and concrete outcomes.',
       href: '#/projects',
       cta: 'Open projects',
     },
     {
-      title: 'Resume Mode',
-      body: 'Different resume framing for different application goals.',
+      title: 'Tracks',
+      body: 'Different ways to read the same profile depending on the role.',
+      href: '#/tracks',
+      cta: 'Open tracks',
+    },
+    {
+      title: 'Resume Paths',
+      body: 'Different framing for different applications.',
       href: '#/resumes',
       cta: 'Open resume paths',
     },
@@ -165,9 +144,9 @@ function QuickEntry() {
       viewport={{ once: true, amount: 0.2 }}
     >
       <SectionHeading
-        eyebrow="Quick Entry"
-        title="Pick your reading path in under 10 seconds."
-        body="先快速浏览，再按兴趣深入。主页负责吸引你，子页面负责说服你。"
+        eyebrow="Overview"
+        title="A quick way into the site."
+        body="如果你只是想快速判断我做过什么，看这里就够了。想深入的话，再进入具体页面。"
       />
       <div className="track-grid">
         {cards.map((card) => (
@@ -191,9 +170,9 @@ function HomeProjectPreview() {
       viewport={{ once: true, amount: 0.2 }}
     >
       <SectionHeading
-        eyebrow="Featured"
-        title="A quick look at projects I am proud of."
-        body="I enjoy building systems that balance technical depth and real-world constraints."
+        eyebrow="Selected Work"
+        title="A few projects worth opening first."
+        body="These are the ones that say the most about how I think and build."
       />
       <div className="project-grid">
         {featuredProjects.slice(0, 3).map((project) => (
@@ -261,7 +240,7 @@ function GitHubProjectsPreview() {
       <SectionHeading
         eyebrow="GitHub"
         title="Recent original repositories"
-        body="Only my own repositories are listed here, so you can focus on original work."
+        body="Only my own repositories are listed here, so this section stays focused on original work."
       />
       {status === 'loading' ? <p className="section-body">Loading repositories...</p> : null}
       {status === 'error' ? (
@@ -300,7 +279,6 @@ function HomePage() {
   return (
     <>
       <Hero />
-      <PlaygroundSection />
       <QuickEntry />
       <HomeProjectPreview />
       <GitHubProjectsPreview />
@@ -615,7 +593,7 @@ function App() {
   return (
     <div className="app-shell">
       <AuroraBackdrop />
-      <CursorRipples />
+      <WaterSurface />
       <header className="site-header">
         <a className="site-mark" href="#/">Rongze Gao</a>
         <nav>

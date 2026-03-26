@@ -306,7 +306,7 @@
   content: '';
   position: absolute;
   inset: -30% -50%;
-  background: radial-gradient(circle, rgba(140, 162, 255, 0.18), transparent 55%);
+  background: radial-gradient(circle, rgba(140, 162, 255, 0.14), transparent 55%);
   transform: translate3d(0, 40%, 0);
   transition: transform 280ms ease;
   pointer-events: none;
@@ -390,19 +390,6 @@
   color: var(--text);
 }
 
-.nebula-shell {
-  height: 19rem;
-  border: 1px solid var(--line);
-  background: rgba(11, 14, 28, 0.62);
-  border-radius: 1.4rem;
-}
-
-.nebula-canvas {
-  width: 100%;
-  height: 100%;
-  display: block;
-}
-
 .site-footer {
   display: flex;
   justify-content: space-between;
@@ -447,10 +434,6 @@
 
   .hero-visual {
     min-height: 26rem;
-  }
-
-  .nebula-shell {
-    height: 15rem;
   }
 
   .hero-tags {

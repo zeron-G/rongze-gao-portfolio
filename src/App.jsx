@@ -1,6 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import './App.css'
+import { AuroraBackdrop } from './components/AuroraBackdrop'
+import { CursorRipples } from './components/CursorRipples'
+import { NetworkNebula } from './components/NetworkNebula'
+import { SignalField } from './components/SignalField'
 import {
   featuredProjects,
   introStats,
@@ -53,19 +57,18 @@ function Hero() {
   return (
     <section className="hero" id="top">
       <div className="hero-copy">
-        <p className="eyebrow">Researcher · Builder · Systems Thinker</p>
-        <h1>Information systems and AI, built for real-world use.</h1>
+        <p className="eyebrow">Rongze Gao · Personal Lab</p>
+        <h1>Hi, I am Rongze. I build AI systems that stay useful beyond demos.</h1>
         <p className="hero-body">
-          I am currently focused on Information Systems and Artificial Intelligence at Johns Hopkins.
-          This portfolio organizes my work in agent systems, quantitative modeling, embodied AI, and
-          applied research with a clear and practical structure.
+          信息系统与人工智能是我的主线。这个主页不堆太多文字，而是用交互和项目让你先直观感受，
+          再按兴趣深入细看技术细节。
         </p>
 
         <div className="hero-actions">
-          <a href="#/tracks">Explore tracks</a>
-          <a href="#/projects">View projects</a>
+          <a href="#/projects">Start with projects</a>
+          <a href="#/tracks">Choose a track</a>
           <a href={siteLinks.github} target="_blank" rel="noreferrer">
-            GitHub
+            Open GitHub
           </a>
         </div>
 
@@ -81,23 +84,130 @@ function Hero() {
       </div>
 
       <div className="hero-visual">
-        <div className="hero-panel panel-primary">
-          <span>Core focus</span>
-          <strong>Reliable intelligent systems under constraints</strong>
-          <p>The common thread is not demos, but systems that remain useful in concrete workflows.</p>
-        </div>
-        <div className="hero-panel panel-secondary">
-          <span>How to use this site</span>
-          <p>Start with tracks for role fit, then open project pages for technical depth.</p>
-        </div>
+        <SignalField />
+        <motion.div
+          className="hero-panel panel-primary"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+        >
+          <span>Core direction</span>
+          <strong>Information Systems + AI</strong>
+          <p>Agent systems, quant tools, embodied intelligence, and applied research.</p>
+        </motion.div>
+        <motion.div
+          className="hero-panel panel-secondary"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.35 }}
+        >
+          <span>Interaction hint</span>
+          <p>Move the cursor, click, and hover cards. The page responds in real time.</p>
+        </motion.div>
         <div className="hero-tags">
           <span>Agent Systems</span>
           <span>Quant / Finance</span>
           <span>Embodied AI</span>
-          <span>Healthcare Research</span>
+          <span>Healthcare AI</span>
         </div>
       </div>
     </section>
+  )
+}
+
+function PlaygroundSection() {
+  return (
+    <MotionSection
+      className="content-section"
+      initial={{ opacity: 0, y: 22 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.2 }}
+    >
+      <SectionHeading
+        eyebrow="Interactive Playground"
+        title="Distributed network field"
+        body="A live simulation where nodes self-organize and react to your pointer, inspired by how real systems evolve under shifting signals."
+      />
+      <div className="nebula-shell interactive-card">
+        <NetworkNebula />
+      </div>
+    </MotionSection>
+  )
+}
+
+function QuickEntry() {
+  const cards = [
+    {
+      title: 'Track Mode',
+      body: 'Role-based view for AI, quant, robotics, and healthcare paths.',
+      href: '#/tracks',
+      cta: 'Open tracks',
+    },
+    {
+      title: 'Project Mode',
+      body: 'Technical depth: architecture, contributions, and outcomes.',
+      href: '#/projects',
+      cta: 'Open projects',
+    },
+    {
+      title: 'Resume Mode',
+      body: 'Different resume framing for different application goals.',
+      href: '#/resumes',
+      cta: 'Open resume paths',
+    },
+  ]
+
+  return (
+    <MotionSection
+      className="content-section"
+      initial={{ opacity: 0, y: 22 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.2 }}
+    >
+      <SectionHeading
+        eyebrow="Quick Entry"
+        title="Pick your reading path in under 10 seconds."
+        body="先快速浏览，再按兴趣深入。主页负责吸引你，子页面负责说服你。"
+      />
+      <div className="track-grid">
+        {cards.map((card) => (
+          <a key={card.title} className="track-card interactive-card" href={card.href}>
+            <h3>{card.title}</h3>
+            <p>{card.body}</p>
+            <strong>{card.cta}</strong>
+          </a>
+        ))}
+      </div>
+    </MotionSection>
+  )
+}
+
+function HomeProjectPreview() {
+  return (
+    <MotionSection
+      className="content-section"
+      initial={{ opacity: 0, y: 22 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.2 }}
+    >
+      <SectionHeading
+        eyebrow="Featured"
+        title="A quick look at projects I am proud of."
+        body="I enjoy building systems that balance technical depth and real-world constraints."
+      />
+      <div className="project-grid">
+        {featuredProjects.slice(0, 3).map((project) => (
+          <a key={project.slug} className="project-card interactive-card" href={`#/projects/${project.slug}`}>
+            <div>
+              <span className="project-type">{project.type}</span>
+              <h3>{project.name}</h3>
+              <p>{project.oneLiner}</p>
+            </div>
+            <strong>Read project</strong>
+          </a>
+        ))}
+      </div>
+    </MotionSection>
   )
 }
 
@@ -114,7 +224,6 @@ function GitHubProjectsPreview() {
         const response = await fetch(
           `https://api.github.com/users/${siteLinks.githubUsername}/repos?per_page=100&sort=updated`,
         )
-
         if (!response.ok) {
           throw new Error(`GitHub request failed with status ${response.status}`)
         }
@@ -137,7 +246,6 @@ function GitHubProjectsPreview() {
     }
 
     loadRepos()
-
     return () => {
       canceled = true
     }
@@ -146,23 +254,29 @@ function GitHubProjectsPreview() {
   return (
     <MotionSection
       className="content-section"
-      initial={{ opacity: 0, y: 24 }}
+      initial={{ opacity: 0, y: 22 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.2 }}
     >
       <SectionHeading
         eyebrow="GitHub"
-        title="Only personal repositories are displayed."
-        body="This list excludes forked repositories and surfaces only original public work from my account."
+        title="Recent original repositories"
+        body="Only my own repositories are listed here, so you can focus on original work."
       />
       {status === 'loading' ? <p className="section-body">Loading repositories...</p> : null}
       {status === 'error' ? (
-        <p className="section-body">Unable to load repositories right now. Please visit GitHub directly.</p>
+        <p className="section-body">Unable to load repositories right now. Please open GitHub directly.</p>
       ) : null}
       {status === 'ready' ? (
         <div className="project-grid">
           {repos.map((repo) => (
-            <a key={repo.id} className="project-card" href={repo.html_url} target="_blank" rel="noreferrer">
+            <a
+              key={repo.id}
+              className="project-card interactive-card"
+              href={repo.html_url}
+              target="_blank"
+              rel="noreferrer"
+            >
               <div>
                 <span className="project-type">Repository</span>
                 <h3>{repo.name}</h3>
@@ -182,134 +296,14 @@ function GitHubProjectsPreview() {
   )
 }
 
-function TracksPreview() {
-  return (
-    <MotionSection
-      className="content-section"
-      initial={{ opacity: 0, y: 24 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.2 }}
-    >
-      <SectionHeading
-        eyebrow="Career Tracks"
-        title="Different readers can enter different versions of the story."
-        body="The site is split into tracks for AI and agent systems, quant and finance, embodied AI and robotics, and healthcare applied research."
-      />
-      <div className="track-grid">
-        {tracks.map((track) => (
-          <a key={track.slug} className="track-card" href={`#/tracks/${track.slug}`}>
-            <span className="track-kicker">{track.kicker}</span>
-            <h3>{track.title}</h3>
-            <p>{track.summary}</p>
-            <ul>
-              {track.highlights.slice(0, 3).map((item) => (
-                <li key={item}>{item}</li>
-              ))}
-            </ul>
-            <strong>Open track</strong>
-          </a>
-        ))}
-      </div>
-    </MotionSection>
-  )
-}
-
-function FeaturedProjects() {
-  return (
-    <MotionSection
-      className="content-section"
-      initial={{ opacity: 0, y: 24 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.2 }}
-    >
-      <SectionHeading
-        eyebrow="Selected Work"
-        title="Projects that carry across more than one industry."
-        body="These projects are highlighted because they show practical system thinking across product, research, and technical depth."
-      />
-      <div className="project-grid">
-        {featuredProjects.map((project) => (
-          <a key={project.slug} className="project-card" href={`#/projects/${project.slug}`}>
-            <div>
-              <span className="project-type">{project.type}</span>
-              <h3>{project.name}</h3>
-              <p>{project.oneLiner}</p>
-            </div>
-            <div className="chip-row">
-              {project.stack.slice(0, 4).map((item) => (
-                <span key={item}>{item}</span>
-              ))}
-            </div>
-            <strong>Read project</strong>
-          </a>
-        ))}
-      </div>
-    </MotionSection>
-  )
-}
-
-function ResumePreview() {
-  return (
-    <MotionSection
-      className="content-section"
-      initial={{ opacity: 0, y: 24 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.2 }}
-    >
-      <SectionHeading
-        eyebrow="Resume Paths"
-        title="Different applications should not all receive the same framing."
-        body="This section helps recruiters and hiring managers open the most relevant profile version first."
-      />
-      <div className="resume-grid">
-        {resumes.map((resume) => (
-          <a key={resume.slug} className="resume-card" href={`#/resumes/${resume.slug}`}>
-            <span>{resume.label}</span>
-            <h3>{resume.title}</h3>
-            <p>{resume.summary}</p>
-            <strong>Open resume path</strong>
-          </a>
-        ))}
-      </div>
-    </MotionSection>
-  )
-}
-
-function TimelinePreview() {
-  return (
-    <MotionSection
-      className="content-section"
-      initial={{ opacity: 0, y: 24 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.2 }}
-    >
-      <SectionHeading
-        eyebrow="Trajectory"
-        title="A profile built by crossing disciplines instead of staying inside one lane."
-      />
-      <div className="timeline-list">
-        {timeline.map((item) => (
-          <article key={item.title} className="timeline-card">
-            <span>{item.period}</span>
-            <h3>{item.title}</h3>
-            <p className="timeline-place">{item.place}</p>
-            <p>{item.summary}</p>
-          </article>
-        ))}
-      </div>
-    </MotionSection>
-  )
-}
-
 function HomePage() {
   return (
     <>
       <Hero />
-      <TracksPreview />
-      <FeaturedProjects />
+      <PlaygroundSection />
+      <QuickEntry />
+      <HomeProjectPreview />
       <GitHubProjectsPreview />
-      <ResumePreview />
-      <TimelinePreview />
     </>
   )
 }
@@ -620,6 +614,8 @@ function App() {
 
   return (
     <div className="app-shell">
+      <AuroraBackdrop />
+      <CursorRipples />
       <header className="site-header">
         <a className="site-mark" href="#/">Rongze Gao</a>
         <nav>

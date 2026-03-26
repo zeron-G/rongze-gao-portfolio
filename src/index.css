@@ -1,13 +1,14 @@
 :root {
-  --bg: #f6f3ed;
-  --surface: #fcfaf6;
-  --surface-strong: #f1ece2;
-  --text: #1f252d;
-  --text-dim: #3f4853;
-  --text-soft: #6b7480;
-  --muted: #5a6572;
-  --line: rgba(31, 37, 45, 0.12);
-  --line-strong: rgba(31, 37, 45, 0.2);
+  --bg: #070912;
+  --surface: #101322;
+  --glass: rgba(20, 25, 40, 0.52);
+  --text: #edf0fb;
+  --text-dim: #c8cee6;
+  --text-soft: #9ca7c8;
+  --muted: #a8b2ce;
+  --line: rgba(184, 194, 241, 0.2);
+  --line-strong: rgba(197, 207, 255, 0.34);
+  --line-active: rgba(157, 170, 255, 0.7);
   --mono: 'IBM Plex Mono', 'SFMono-Regular', Consolas, monospace;
   --sans: 'Manrope', 'Segoe UI', sans-serif;
 
@@ -27,17 +28,33 @@
 
 html {
   background:
-    radial-gradient(circle at top, rgba(120, 103, 77, 0.09), transparent 48%),
-    linear-gradient(180deg, #f7f3eb 0%, #f3eee3 100%);
+    radial-gradient(circle at 10% 10%, rgba(110, 138, 255, 0.2), transparent 35%),
+    radial-gradient(circle at 80% 15%, rgba(170, 98, 255, 0.18), transparent 42%),
+    radial-gradient(circle at 30% 85%, rgba(88, 192, 255, 0.16), transparent 40%),
+    linear-gradient(180deg, #090c18 0%, #070912 100%);
 }
 
 body {
   margin: 0;
   min-width: 320px;
   background:
-    radial-gradient(circle at 78% 12%, rgba(120, 103, 77, 0.08), transparent 22%),
-    radial-gradient(circle at 16% 88%, rgba(85, 76, 61, 0.08), transparent 20%),
-    linear-gradient(180deg, #f7f3eb, #f3eee3);
+    radial-gradient(circle at 85% 14%, rgba(92, 126, 255, 0.16), transparent 26%),
+    radial-gradient(circle at 15% 90%, rgba(101, 201, 255, 0.12), transparent 24%),
+    linear-gradient(180deg, rgba(6, 10, 20, 0.96), rgba(7, 9, 18, 1));
+  overflow-x: hidden;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(183, 199, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(183, 199, 255, 0.03) 1px, transparent 1px);
+  background-size: 6rem 6rem;
+  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.92), transparent 88%);
 }
 
 a {
@@ -56,7 +73,95 @@ select {
   min-height: 100svh;
 }
 
+.aurora-backdrop {
+  position: fixed;
+  inset: -12%;
+  z-index: -3;
+  pointer-events: none;
+  --aurora-x: 60vw;
+  --aurora-y: 30vh;
+}
+
+.aurora-layer {
+  position: absolute;
+  inset: 0;
+  filter: blur(54px);
+  opacity: 0.8;
+  animation: auroraDrift 12s ease-in-out infinite alternate;
+}
+
+.aurora-layer-primary {
+  background:
+    radial-gradient(circle at var(--aurora-x) var(--aurora-y), rgba(118, 136, 255, 0.34), transparent 38%),
+    radial-gradient(circle at 80% 20%, rgba(151, 104, 255, 0.26), transparent 30%);
+}
+
+.aurora-layer-secondary {
+  background:
+    radial-gradient(circle at 22% 80%, rgba(94, 201, 255, 0.24), transparent 32%),
+    radial-gradient(circle at 75% 75%, rgba(125, 110, 255, 0.18), transparent 30%);
+  animation-duration: 16s;
+}
+
+.aurora-layer-tertiary {
+  background:
+    radial-gradient(circle at 50% 15%, rgba(132, 164, 255, 0.2), transparent 26%),
+    radial-gradient(circle at 10% 40%, rgba(178, 104, 255, 0.16), transparent 24%);
+  animation-duration: 20s;
+}
+
+.ripple-layer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 50;
+}
+
+.cursor-ripple {
+  position: absolute;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  border: 1px solid rgba(168, 190, 255, 0.58);
+  box-shadow:
+    0 0 0 2px rgba(138, 114, 255, 0.14),
+    0 0 22px rgba(138, 114, 255, 0.2);
+  transform: translate(-50%, -50%) scale(var(--scale, 1));
+  animation: rippleOut 880ms ease-out forwards;
+}
+
+@keyframes rippleOut {
+  0% {
+    opacity: 0.9;
+    transform: translate(-50%, -50%) scale(calc(var(--scale, 1) * 0.75));
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(calc(var(--scale, 1) * 2.6));
+  }
+}
+
+@keyframes auroraDrift {
+  0% {
+    transform: translate3d(-1.5%, -1%, 0);
+  }
+  100% {
+    transform: translate3d(1.2%, 0.8%, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aurora-layer,
+  .cursor-ripple {
+    animation: none;
+  }
+
+  .cursor-ripple {
+    opacity: 0;
+  }
+}
+
 ::selection {
-  background: rgba(82, 94, 109, 0.24);
+  background: rgba(125, 142, 255, 0.34);
   color: var(--text);
 }

@@ -43,7 +43,7 @@ export function SignalField() {
 
     const drawGrid = (time) => {
       context.save()
-      context.strokeStyle = 'rgba(154, 227, 255, 0.1)'
+      context.strokeStyle = 'rgba(170, 192, 255, 0.12)'
       context.lineWidth = 1
 
       for (let step = 0; step < 6; step += 1) {
@@ -63,7 +63,7 @@ export function SignalField() {
       }
 
       context.translate(width * 0.62, height * 0.52)
-      context.strokeStyle = 'rgba(154, 227, 255, 0.18)'
+      context.strokeStyle = 'rgba(154, 166, 255, 0.22)'
 
       ;[0.17, 0.3, 0.45, 0.62].forEach((ring) => {
         context.beginPath()
@@ -73,7 +73,7 @@ export function SignalField() {
 
       context.setLineDash([8, 12])
       context.lineDashOffset = -time * 0.015
-      context.strokeStyle = 'rgba(255, 184, 106, 0.28)'
+      context.strokeStyle = 'rgba(183, 128, 255, 0.34)'
       context.beginPath()
       context.arc(0, 0, Math.min(width, height) * 0.38, -Math.PI / 6, Math.PI / 2)
       context.stroke()
@@ -86,7 +86,7 @@ export function SignalField() {
       context.setLineDash([12, 10])
       context.lineDashOffset = -time * 0.025
 
-      context.strokeStyle = 'rgba(55, 207, 255, 0.65)'
+      context.strokeStyle = 'rgba(108, 203, 255, 0.62)'
       context.beginPath()
       context.moveTo(width * 0.12, height * 0.8)
       context.bezierCurveTo(
@@ -99,7 +99,7 @@ export function SignalField() {
       )
       context.stroke()
 
-      context.strokeStyle = 'rgba(255, 184, 106, 0.55)'
+      context.strokeStyle = 'rgba(167, 115, 255, 0.58)'
       context.beginPath()
       context.moveTo(width * 0.16, height * 0.28)
       context.bezierCurveTo(
@@ -135,29 +135,29 @@ export function SignalField() {
           (pointer.y - 0.5) * 22 * pointer.intensity
 
         context.beginPath()
-        context.fillStyle = `rgba(154, 227, 255, ${node.opacity})`
+        context.fillStyle = `rgba(166, 186, 255, ${node.opacity})`
         context.arc(x, y, node.radius, 0, Math.PI * 2)
         context.fill()
 
         context.beginPath()
-        context.fillStyle = `rgba(255, 184, 106, ${0.08 + (index % 4) * 0.04})`
+        context.fillStyle = `rgba(170, 119, 255, ${0.08 + (index % 4) * 0.04})`
         context.arc(x, y, node.radius * 3, 0, Math.PI * 2)
         context.fill()
 
         context.beginPath()
-        context.strokeStyle = 'rgba(154, 227, 255, 0.08)'
+        context.strokeStyle = 'rgba(166, 186, 255, 0.1)'
         context.moveTo(centerX, centerY)
         context.lineTo(x, y)
         context.stroke()
       })
 
       context.beginPath()
-      context.fillStyle = 'rgba(55, 207, 255, 0.9)'
+      context.fillStyle = 'rgba(122, 203, 255, 0.92)'
       context.arc(centerX, centerY, 6, 0, Math.PI * 2)
       context.fill()
 
       context.beginPath()
-      context.strokeStyle = 'rgba(55, 207, 255, 0.24)'
+      context.strokeStyle = 'rgba(122, 203, 255, 0.28)'
       context.lineWidth = 14
       context.arc(centerX, centerY, 18, 0, Math.PI * 2)
       context.stroke()
@@ -174,9 +174,9 @@ export function SignalField() {
         height * 0.5,
         Math.max(width, height) * 0.72,
       )
-      baseGradient.addColorStop(0, 'rgba(15, 36, 66, 0.88)')
-      baseGradient.addColorStop(0.55, 'rgba(6, 12, 24, 0.56)')
-      baseGradient.addColorStop(1, 'rgba(4, 8, 18, 0.08)')
+      baseGradient.addColorStop(0, 'rgba(30, 32, 84, 0.72)')
+      baseGradient.addColorStop(0.55, 'rgba(10, 13, 34, 0.62)')
+      baseGradient.addColorStop(1, 'rgba(6, 8, 20, 0.1)')
       context.fillStyle = baseGradient
       context.fillRect(0, 0, width, height)
 
@@ -188,8 +188,8 @@ export function SignalField() {
         height * pointer.y,
         Math.max(width, height) * 0.22,
       )
-      pointerGlow.addColorStop(0, 'rgba(55, 207, 255, 0.22)')
-      pointerGlow.addColorStop(1, 'rgba(55, 207, 255, 0)')
+      pointerGlow.addColorStop(0, 'rgba(164, 133, 255, 0.28)')
+      pointerGlow.addColorStop(1, 'rgba(164, 133, 255, 0)')
       context.fillStyle = pointerGlow
       context.fillRect(0, 0, width, height)
 

@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import './App.css'
-import { SignalField } from './components/SignalField'
 import {
   featuredProjects,
   introStats,
@@ -54,13 +53,12 @@ function Hero() {
   return (
     <section className="hero" id="top">
       <div className="hero-copy">
-        <p className="eyebrow">Researcher · Builder · Multi-track Operator</p>
-        <h1>One portfolio, multiple career narratives.</h1>
+        <p className="eyebrow">Researcher · Builder · Systems Thinker</p>
+        <h1>Information systems and AI, built for real-world use.</h1>
         <p className="hero-body">
-          I work across AI agents, quantitative modeling, embodied intelligence,
-          and real-world decision systems. This site is designed as a central
-          hub: broad enough to support different applications, structured enough
-          to let each reader enter the right story fast.
+          I am currently focused on Information Systems and Artificial Intelligence at Johns Hopkins.
+          This portfolio organizes my work in agent systems, quantitative modeling, embodied AI, and
+          applied research with a clear and practical structure.
         </p>
 
         <div className="hero-actions">
@@ -83,18 +81,14 @@ function Hero() {
       </div>
 
       <div className="hero-visual">
-        <SignalField />
         <div className="hero-panel panel-primary">
-          <span>Core through-line</span>
-          <strong>Intelligent systems under real constraints</strong>
-          <p>
-            From healthcare agents to market models to robotics workflows, the
-            consistent theme is designing systems that stay useful outside the lab.
-          </p>
+          <span>Core focus</span>
+          <strong>Reliable intelligent systems under constraints</strong>
+          <p>The common thread is not demos, but systems that remain useful in concrete workflows.</p>
         </div>
         <div className="hero-panel panel-secondary">
           <span>How to use this site</span>
-          <p>Choose a track for role-specific framing, or jump into projects for technical depth.</p>
+          <p>Start with tracks for role fit, then open project pages for technical depth.</p>
         </div>
         <div className="hero-tags">
           <span>Agent Systems</span>
@@ -107,13 +101,99 @@ function Hero() {
   )
 }
 
+function GitHubProjectsPreview() {
+  const [repos, setRepos] = useState([])
+  const [status, setStatus] = useState('loading')
+
+  useEffect(() => {
+    let canceled = false
+
+    const loadRepos = async () => {
+      setStatus('loading')
+      try {
+        const response = await fetch(
+          `https://api.github.com/users/${siteLinks.githubUsername}/repos?per_page=100&sort=updated`,
+        )
+
+        if (!response.ok) {
+          throw new Error(`GitHub request failed with status ${response.status}`)
+        }
+
+        const data = await response.json()
+        const personalRepos = data
+          .filter((repo) => !repo.fork)
+          .sort((left, right) => new Date(right.pushed_at) - new Date(left.pushed_at))
+          .slice(0, 6)
+
+        if (!canceled) {
+          setRepos(personalRepos)
+          setStatus('ready')
+        }
+      } catch {
+        if (!canceled) {
+          setStatus('error')
+        }
+      }
+    }
+
+    loadRepos()
+
+    return () => {
+      canceled = true
+    }
+  }, [])
+
+  return (
+    <MotionSection
+      className="content-section"
+      initial={{ opacity: 0, y: 24 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.2 }}
+    >
+      <SectionHeading
+        eyebrow="GitHub"
+        title="Only personal repositories are displayed."
+        body="This list excludes forked repositories and surfaces only original public work from my account."
+      />
+      {status === 'loading' ? <p className="section-body">Loading repositories...</p> : null}
+      {status === 'error' ? (
+        <p className="section-body">Unable to load repositories right now. Please visit GitHub directly.</p>
+      ) : null}
+      {status === 'ready' ? (
+        <div className="project-grid">
+          {repos.map((repo) => (
+            <a key={repo.id} className="project-card" href={repo.html_url} target="_blank" rel="noreferrer">
+              <div>
+                <span className="project-type">Repository</span>
+                <h3>{repo.name}</h3>
+                <p>{repo.description || 'No description provided yet.'}</p>
+              </div>
+              <div className="chip-row">
+                <span>{repo.language || 'Code'}</span>
+                <span>{`Stars ${repo.stargazers_count}`}</span>
+                <span>{`Updated ${new Date(repo.pushed_at).toLocaleDateString('en-US')}`}</span>
+              </div>
+              <strong>Open repository</strong>
+            </a>
+          ))}
+        </div>
+      ) : null}
+    </MotionSection>
+  )
+}
+
 function TracksPreview() {
   return (
-    <MotionSection className="content-section" initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.2 }}>
+    <MotionSection
+      className="content-section"
+      initial={{ opacity: 0, y: 24 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.2 }}
+    >
       <SectionHeading
         eyebrow="Career Tracks"
         title="Different readers can enter different versions of the story."
-        body="Instead of forcing one homepage to fit every role, the site is split into tracks for AI / agent systems, quant / finance, embodied AI / robotics, and healthcare / applied research."
+        body="The site is split into tracks for AI and agent systems, quant and finance, embodied AI and robotics, and healthcare applied research."
       />
       <div className="track-grid">
         {tracks.map((track) => (
@@ -136,11 +216,16 @@ function TracksPreview() {
 
 function FeaturedProjects() {
   return (
-    <MotionSection className="content-section" initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.2 }}>
+    <MotionSection
+      className="content-section"
+      initial={{ opacity: 0, y: 24 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.2 }}
+    >
       <SectionHeading
         eyebrow="Selected Work"
         title="Projects that carry across more than one industry."
-        body="These are the systems most worth reading first because they show how the same builder can operate in product, research, and high-stakes technical environments."
+        body="These projects are highlighted because they show practical system thinking across product, research, and technical depth."
       />
       <div className="project-grid">
         {featuredProjects.map((project) => (
@@ -165,11 +250,16 @@ function FeaturedProjects() {
 
 function ResumePreview() {
   return (
-    <MotionSection className="content-section" initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.2 }}>
+    <MotionSection
+      className="content-section"
+      initial={{ opacity: 0, y: 24 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.2 }}
+    >
       <SectionHeading
         eyebrow="Resume Paths"
         title="Different applications should not all receive the same framing."
-        body="This section makes it easy to point recruiters, professors, and hiring managers toward the most relevant version of the profile."
+        body="This section helps recruiters and hiring managers open the most relevant profile version first."
       />
       <div className="resume-grid">
         {resumes.map((resume) => (
@@ -187,7 +277,12 @@ function ResumePreview() {
 
 function TimelinePreview() {
   return (
-    <MotionSection className="content-section" initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.2 }}>
+    <MotionSection
+      className="content-section"
+      initial={{ opacity: 0, y: 24 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.2 }}
+    >
       <SectionHeading
         eyebrow="Trajectory"
         title="A profile built by crossing disciplines instead of staying inside one lane."
@@ -212,6 +307,7 @@ function HomePage() {
       <Hero />
       <TracksPreview />
       <FeaturedProjects />
+      <GitHubProjectsPreview />
       <ResumePreview />
       <TimelinePreview />
     </>
@@ -224,7 +320,7 @@ function TracksIndex() {
       <SectionHeading
         eyebrow="Career Tracks"
         title="Choose the version of the portfolio that matches the role."
-        body="Each track reorders projects, experience, and proof so the same background can speak differently to agent labs, finance teams, robotics groups, and applied research environments."
+        body="Each track reorders projects, experience, and proof so the same background can speak differently to different teams."
       />
       <div className="track-grid">
         {tracks.map((track) => (
@@ -248,7 +344,7 @@ function TracksIndex() {
 function TrackPage({ track }) {
   return (
     <section className="page-shell">
-      <a className="back-link" href="#/tracks">← Back to tracks</a>
+      <a className="back-link" href="#/tracks">Back to tracks</a>
       <div className="page-hero">
         <p className="eyebrow">{track.kicker}</p>
         <h1>{track.title}</h1>
@@ -304,7 +400,7 @@ function ProjectsIndex() {
       <SectionHeading
         eyebrow="Projects"
         title="Project pages are where the technical depth lives."
-        body="The homepage is intentionally selective. These deeper pages are the evidence layer: architecture, motivation, contributions, and outcomes."
+        body="The homepage is selective. These pages provide architecture, motivation, and outcomes."
       />
       <div className="project-grid">
         {featuredProjects.map((project) => (
@@ -330,7 +426,7 @@ function ProjectsIndex() {
 function ProjectPage({ project }) {
   return (
     <section className="page-shell">
-      <a className="back-link" href="#/projects">← Back to projects</a>
+      <a className="back-link" href="#/projects">Back to projects</a>
       <div className="page-hero">
         <p className="eyebrow">{project.type}</p>
         <h1>{project.name}</h1>
@@ -338,7 +434,9 @@ function ProjectPage({ project }) {
         <div className="page-actions">
           <a href={project.repo} target="_blank" rel="noreferrer">Open GitHub</a>
           {project.trackLinks.map((slug) => (
-            <a key={slug} href={`#/tracks/${slug}`}>{tracks.find((track) => track.slug === slug)?.shortLabel || slug}</a>
+            <a key={slug} href={`#/tracks/${slug}`}>
+              {tracks.find((track) => track.slug === slug)?.shortLabel || slug}
+            </a>
           ))}
         </div>
       </div>
@@ -401,7 +499,7 @@ function ResumesIndex() {
       <SectionHeading
         eyebrow="Resume Paths"
         title="Use the right framing for the right application."
-        body="This part of the site is built to support multiple job families without diluting the overall personal brand."
+        body="This part of the site supports multiple job families without diluting your overall profile."
       />
       <div className="resume-grid">
         {resumes.map((resume) => (
@@ -420,7 +518,7 @@ function ResumesIndex() {
 function ResumePage({ resume }) {
   return (
     <section className="page-shell">
-      <a className="back-link" href="#/resumes">← Back to resume paths</a>
+      <a className="back-link" href="#/resumes">Back to resume paths</a>
       <div className="page-hero">
         <p className="eyebrow">{resume.label}</p>
         <h1>{resume.title}</h1>
@@ -469,7 +567,7 @@ function NotFound() {
     <section className="page-shell">
       <h1>Page not found.</h1>
       <p className="page-body">The route does not exist yet. Use the navigation to return to the main site.</p>
-      <a className="back-link" href="#/">← Back home</a>
+      <a className="back-link" href="#/">Back home</a>
     </section>
   )
 }

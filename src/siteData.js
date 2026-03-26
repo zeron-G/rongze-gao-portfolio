@@ -1,6 +1,7 @@
 export const siteLinks = {
   email: 'mailto:rgao28@jh.edu',
   github: 'https://github.com/zeron-G',
+  githubUsername: 'zeron-G',
   linkedin: 'https://www.linkedin.com/in/rongze-gao-09b488303/',
 }
 
@@ -8,11 +9,11 @@ export const introStats = [
   {
     label: 'Current base',
     value: 'JHU MSISAI',
-    detail: 'Johns Hopkins master’s work centered on intelligent systems and applied AI.',
+    detail: 'MS in Information Systems and Artificial Intelligence at Johns Hopkins University.',
   },
   {
     label: 'Cross-domain range',
-    value: 'AI ↔ Finance ↔ Robotics',
+    value: 'AI -> Finance -> Robotics',
     detail: 'A profile shaped by agent systems, quantitative research, and embodied workflows.',
   },
   {
@@ -207,7 +208,7 @@ export const tracks = [
     summary:
       'Best for AI engineer, applied scientist, research engineer, and agent-system roles where memory, orchestration, model behavior, and system architecture matter more than hype.',
     rationale:
-      'This track exists because the strongest AI-facing version of the portfolio is not just “I use LLMs.” It is about building persistent systems with memory, reasoning structure, runtime design, and real deployment constraints.',
+      'This track exists because the strongest AI-facing version of the portfolio is not just "I use LLMs." It is about building persistent systems with memory, reasoning structure, runtime design, and real deployment constraints.',
     roles: ['AI Engineer', 'Research Engineer', 'Applied Scientist', 'Agent Systems Builder'],
     highlights: [
       'ANIMA as the flagship long-lived agent framework.',
@@ -320,45 +321,47 @@ export const resumes = [
 
 export const timeline = [
   {
-    period: '2021 – 2025',
+    period: '2021 - 2025',
     title: 'Finance and economics foundation',
     place: 'University of Waikato Joint Institute @ HZU',
     summary:
       'Built a base in markets, valuation, and analytical reasoning that later expanded into quantitative and systems-heavy work.',
   },
   {
-    period: '2022 – Present',
+    period: '2022 - Present',
     title: 'WorldQuant research consulting',
     place: 'WorldQuant Brain',
     summary:
       'Worked on quantitative signal research and built credibility in finance-facing analytical environments.',
   },
   {
-    period: '2023 – 2024',
+    period: '2023 - 2024',
     title: 'CQF with Distinction',
     place: 'Certificate in Quantitative Finance',
     summary:
       'Added formal quantitative-finance depth and technical discipline beyond the standard student profile.',
   },
   {
-    period: '2025 – Present',
+    period: '2025 - Present',
     title: 'Healthcare AI and agent research',
     place: 'CDHAI / Johns Hopkins',
     summary:
       'Contributed to healthcare-oriented AI workflows and agent-system thinking in applied research settings.',
   },
   {
-    period: '2025 – 2026',
+    period: '2025 - 2026',
     title: 'Ward Infinity / Vital Guardian',
     place: 'Johns Hopkins accelerator context',
     summary:
       'Worked on AI-enabled monitoring ideas linked to a first-place finish and a $20,000 grant outcome.',
   },
   {
-    period: '2025 – Present',
+    period: '2025 - Present',
     title: 'Embodied AI / robotics exposure',
     place: 'Tuskrobots',
     summary:
       'Expanded the portfolio beyond screen-only systems into deployment, CV, and embodied engineering contexts.',
   },
 ]
+
+

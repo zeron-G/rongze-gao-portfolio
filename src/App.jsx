@@ -66,6 +66,7 @@ function Hero() {
         <div className="hero-actions">
           <a href="#/projects">View projects</a>
           <a href="#/tracks">Explore tracks</a>
+          <a href="./game.html">Play Nebula Coil</a>
           <a href={siteLinks.github} target="_blank" rel="noreferrer">
             GitHub
           </a>
@@ -133,6 +134,12 @@ function QuickEntry() {
       body: 'Different framing for different applications.',
       href: '#/resumes',
       cta: 'Open resume paths',
+    },
+    {
+      title: 'Arcade',
+      body: 'A neon 3D-style snake run with warp gates, combo scoring, and a local leaderboard.',
+      href: './game.html',
+      cta: 'Play Nebula Coil',
     },
   ]
 
@@ -600,6 +607,7 @@ function App() {
           <NavLink href="#/tracks">Tracks</NavLink>
           <NavLink href="#/projects">Projects</NavLink>
           <NavLink href="#/resumes">Resume Paths</NavLink>
+          <a className="nav-link" href="./game.html">Arcade</a>
           <a className="nav-link" href={siteLinks.github} target="_blank" rel="noreferrer">GitHub</a>
         </nav>
       </header>

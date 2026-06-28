@@ -4,15 +4,16 @@
    heavy Archivo display for the name. Big type, hairlines, restraint.
    ─────────────────────────────────────────────────────────────── */
 :root{
-  --ink:#0A0B0E;        /* near-black, faintly warm */
-  --ink-2:#101116;
-  --bone:#ECEAE3;       /* warm off-white — the spoken line */
-  --ash:#8E8A80;        /* warm grey — secondary */
-  --faint:#56534C;      /* dim labels */
-  --amber:#F0A93C;      /* THE signal accent */
-  --amber-rgb:240,169,60;
-  --line:#23231F;       /* hairlines */
-  --line-2:#181814;
+  --ink:#05080E;        /* deep space black, blue bias */
+  --ink-2:#0A0F16;
+  --bone:#E6EEF0;       /* cool off-white — the spoken line */
+  --ash:#8A97A2;        /* cool grey — secondary */
+  --faint:#49545E;      /* dim labels */
+  --amber:#5BE9DB;      /* THE accent — Tiffany cyan (var name kept to limit churn) */
+  --amber-rgb:91,233,219;
+  --cyan-deep:#0ABAB5;  /* true Tiffany, for fills */
+  --line:#16212B;       /* hairlines */
+  --line-2:#0E1620;
   --disp:"Archivo","Arial Narrow",system-ui,sans-serif;
   --mono:"IBM Plex Mono",ui-monospace,"Cascadia Code",Consolas,monospace;
   --pad:clamp(20px,5vw,90px);
@@ -60,6 +61,26 @@ html.has-cursor,html.has-cursor a,html.has-cursor button,html.has-cursor [data-c
 /* ── masked line-rise reveal ── */
 .reveal-mask{display:inline-block;overflow:hidden;vertical-align:top;padding-bottom:.04em}
 .reveal-inner{display:inline-block;will-change:transform}
+
+/* ── domains constellation ── */
+.const-wrap{display:grid;grid-template-columns:1.25fr 1fr;gap:32px;align-items:center;max-width:1000px}
+.const-svg{width:100%;height:auto;overflow:visible}
+.c-edge{stroke:var(--line);stroke-width:.28;transition:stroke .25s,stroke-width .25s}
+.c-edge.on{stroke:var(--amber);stroke-width:.45}
+.c-node{cursor:pointer}
+.c-node text{font-family:var(--mono);font-size:2.5px;letter-spacing:.03em;fill:var(--ash);text-anchor:middle;transition:fill .25s}
+.c-node.on text{fill:var(--bone)}
+.c-star{fill:var(--bone);transition:fill .25s,r .25s}
+.c-node.on .c-star{fill:var(--amber)}
+.c-halo{fill:var(--amber);opacity:0;transition:opacity .3s}
+.c-node.on .c-halo{opacity:.14}
+.c-node:not(.on) .c-halo{animation:twinkle 4.5s ease-in-out infinite}
+@keyframes twinkle{0%,100%{opacity:0}50%{opacity:.07}}
+.const-caption{border-left:1px solid var(--line);padding-left:26px}
+.c-kicker{font-family:var(--mono);font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--amber)}
+.const-caption strong{display:block;font-family:var(--disp);font-weight:800;text-transform:uppercase;font-size:clamp(22px,3vw,34px);margin:10px 0 10px;color:var(--bone)}
+.const-caption p{color:var(--ash);font-size:14px;line-height:1.65;max-width:34ch}
+@media (max-width:680px){.const-wrap{grid-template-columns:1fr;gap:22px}.c-node text{font-size:3.4px}}
 
 /* ── topbar ── */
 .topbar{position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:18px;

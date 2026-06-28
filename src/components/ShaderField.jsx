@@ -23,31 +23,46 @@ float fbm(vec2 p){
   for(int i=0;i<5;i++){ v+=a*noise(p); p*=2.02; a*=0.5; }
   return v;
 }
+float starLayer(vec2 uv, float scale, float tm){
+  vec2 p=uv*scale; vec2 i=floor(p), f=fract(p);
+  float h=hash(i);
+  float b=smoothstep(0.90,1.0,h);
+  vec2 c=vec2(hash(i+7.1), hash(i+13.7));
+  float d=length(f-c);
+  float tw=0.55+0.45*sin(tm*1.8+h*40.0);
+  return b*smoothstep(0.08,0.0,d)*tw;
+}
 void main(){
   vec2 uv = gl_FragCoord.xy / u_res;
   vec2 p = (gl_FragCoord.xy - 0.5*u_res) / u_res.y;
-  float t = u_time * 0.045;
+  float t = u_time * 0.04;
+  vec2 mo = (u_mouse - 0.5); mo.y = -mo.y;
 
-  // domain warp
-  vec2 q = vec2(fbm(p*1.6 + vec2(0.0, t)), fbm(p*1.6 + vec2(5.2, -t)));
-  vec2 r = vec2(fbm(p*1.6 + 3.0*q + vec2(1.7, 9.2) + t*0.5),
-                fbm(p*1.6 + 3.0*q + vec2(8.3, 2.8) - t*0.5));
-  float f = fbm(p*1.8 + 3.5*r);
+  // nebula (domain-warped)
+  vec2 q = p*1.3 + mo*0.12;
+  vec2 w = vec2(fbm(q + vec2(0.0, t)), fbm(q + vec2(4.0, -t)));
+  float neb = smoothstep(0.32, 0.96, fbm(q*1.4 + 2.6*w + t*0.4));
 
-  // mouse glow
+  vec3 deepblue = vec3(0.05, 0.11, 0.22);
+  vec3 teal     = vec3(0.03, 0.42, 0.42);
+  vec3 tiff     = vec3(0.36, 0.91, 0.86);
+  vec3 col = vec3(0.012, 0.022, 0.038);
+  col = mix(col, deepblue, neb*0.55);
+  col += teal * pow(neb, 1.8) * 0.55;
+  col += tiff * pow(neb, 3.0) * 0.28;
+
+  // starfield — two parallax layers
+  vec2 su = uv * vec2(u_res.x/u_res.y, 1.0);
+  float s = starLayer(su + mo*0.04, 130.0, u_time)
+          + starLayer(su + mo*0.10 + 17.0, 74.0, u_time) * 0.8;
+  col += vec3(0.82, 0.95, 1.0) * s;
+
+  // cursor glow
   vec2 m = u_mouse; m.y = 1.0 - m.y;
-  float md = distance(uv, m);
-  float glow = smoothstep(0.58, 0.0, md) * (0.5 + 0.8*u_react);
+  float glow = smoothstep(0.5, 0.0, distance(uv, m)) * (0.4 + 0.7*u_react);
+  col += tiff * glow * 0.38;
 
-  vec3 ink   = vec3(0.039, 0.043, 0.055);
-  vec3 deep  = vec3(0.082, 0.090, 0.110);
-  vec3 amber = vec3(0.957, 0.663, 0.235);
-
-  float bands = smoothstep(0.36, 0.97, f);
-  vec3 col = mix(ink, deep, smoothstep(0.10, 0.86, f));
-  col += amber * pow(bands, 1.8) * 0.38;             // ember filaments (visible)
-  col += amber * glow * (0.24 + 0.45*pow(bands,1.7)); // cursor brightening
-  col *= 1.0 - 0.40*pow(length(p*vec2(0.72,1.0)), 2.2); // soft vignette
+  col *= 1.0 - 0.45*pow(length(p*vec2(0.72,1.0)), 2.3);
   gl_FragColor = vec4(col, 1.0);
 }
 `

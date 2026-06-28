@@ -81,13 +81,13 @@ function MagLink({ href, children, className, external }) {
 
 const COPY = {
   en: {
-    nav: { work: 'Work', tracks: 'Tracks', signals: 'Signals', path: 'Path', beyond: 'Beyond', contact: 'Contact' },
+    nav: { fields: 'Fields', work: 'Work', tracks: 'Tracks', signals: 'Signals', path: 'Path', beyond: 'Beyond', contact: 'Contact' },
     status: 'Online · open to AI / quant / robotics roles',
     role: 'AI Systems · Quant · Embodied Intelligence',
     intro: 'I build systems that stay alive — agents with memory, runtimes that hold under load, models that meet the physical world. Johns Hopkins MSISAI. Research-grade and builder-grade at once.',
     cta: { github: 'GitHub', email: 'Email', resume: 'Web Game', priv: 'Private' },
     scroll: 'Scroll',
-    sec: { work: 'Selected Work', tracks: 'Read Me By Track', signals: 'Signals', path: 'Trajectory', beyond: 'Beyond The Terminal', contact: 'Reach Me' },
+    sec: { domains: 'Constellation', work: 'Selected Work', tracks: 'Read Me By Track', signals: 'Signals', path: 'Trajectory', beyond: 'Beyond The Terminal', contact: 'Reach Me' },
     flagship: 'Flagship · live', open: 'Open repo',
     beyondNote: 'The instincts behind the systems — control, rhythm, spatial judgement, procedure.',
     privNote: 'A private space — Eva (a living, self-evolving AI) and personal services live behind an email gate.',
@@ -95,13 +95,13 @@ const COPY = {
     footer: 'Built + deployed by its owner. Bilingual.',
   },
   zh: {
-    nav: { work: '作品', tracks: '路径', signals: '信号', path: '轨迹', beyond: '之外', contact: '联系' },
+    nav: { fields: '领域', work: '作品', tracks: '路径', signals: '信号', path: '轨迹', beyond: '之外', contact: '联系' },
     status: '在线 · 开放 AI / 量化 / 机器人方向机会',
     role: 'AI 系统 · 量化 · 具身智能',
     intro: '我做"活着"的系统 —— 有记忆的智能体、扛得住负载的运行时、能触及物理世界的模型。约翰霍普金斯 MSISAI。研究级与工程级,二者兼具。',
     cta: { github: 'GitHub', email: '邮箱', resume: '网页游戏', priv: '私域' },
     scroll: '向下',
-    sec: { work: '选录作品', tracks: '按路径阅读', signals: '信号', path: '轨迹', beyond: '终端之外', contact: '联系我' },
+    sec: { domains: '领域星图', work: '选录作品', tracks: '按路径阅读', signals: '信号', path: '轨迹', beyond: '终端之外', contact: '联系我' },
     flagship: '旗舰 · 已上线', open: '打开仓库',
     beyondNote: '系统背后的直觉 —— 控制、节奏、空间判断、流程。',
     privNote: '一处私域 —— Eva(一个活着的、自进化的 AI)与个人服务,藏在邮箱门之后。',
@@ -161,6 +161,56 @@ function Eyebrow({ n, children }) {
   return <div className="eyebrow"><span className="eyebrow-n">{n}</span><RevealText className="eyebrow-t" text={children} /></div>
 }
 
+/* ── domains constellation (space) ── */
+const DOMAINS = [
+  { id: 'core', x: 50, y: 52, r: 3.0, label: { en: 'Rongze', zh: '荣泽' }, blurb: { en: 'Where the fields connect — one operator across all of them.', zh: '各领域在此交汇 —— 一个人贯穿全部。' } },
+  { id: 'ai', x: 30, y: 33, r: 2.1, label: { en: 'AI · Agents', zh: 'AI · 智能体' }, blurb: { en: 'Persistent, memory-driven agent systems that stay alive.', zh: '有记忆、能长期运行的"活着"的智能体系统。' } },
+  { id: 'quant', x: 71, y: 29, r: 2.1, label: { en: 'Quant · Finance', zh: '量化 · 金融' }, blurb: { en: 'Signal research, modeling, financial AI. CQF, WorldQuant.', zh: '信号研究、建模、金融 AI。CQF、WorldQuant。' } },
+  { id: 'systems', x: 85, y: 49, r: 2.0, label: { en: 'Systems · Code', zh: '系统 · 编程' }, blurb: { en: 'Runtimes, performance, cross-language low-level craft.', zh: '运行时、性能、跨语言的底层工程。' } },
+  { id: 'medical', x: 77, y: 71, r: 2.0, label: { en: 'Healthcare', zh: '医疗 · 健康' }, blurb: { en: 'Human-facing AI in high-stakes clinical contexts.', zh: '高风险医疗场景里直接面向人的 AI。' } },
+  { id: 'gaming', x: 56, y: 83, r: 1.9, label: { en: 'Gaming', zh: '游戏' }, blurb: { en: 'Systems thinking as play — balance and interaction.', zh: '把系统思维当游乐场 —— 平衡与交互。' } },
+  { id: 'embodied', x: 25, y: 71, r: 2.0, label: { en: 'Robotics', zh: '机器人 · 具身' }, blurb: { en: 'Perception, deployment, intelligence in the physical world.', zh: '感知、部署、走进物理世界的智能。' } },
+  { id: 'flight', x: 43, y: 18, r: 1.9, label: { en: 'Flight · FPV', zh: '飞行 · 穿越机' }, blurb: { en: 'Control, procedure, spatial judgement, precision.', zh: '控制、流程、空间判断、精度。' } },
+]
+const LINKS = [
+  ['core', 'ai'], ['core', 'quant'], ['core', 'systems'], ['core', 'medical'], ['core', 'gaming'], ['core', 'embodied'], ['core', 'flight'],
+  ['ai', 'quant'], ['ai', 'systems'], ['ai', 'medical'], ['quant', 'systems'], ['embodied', 'flight'], ['embodied', 'medical'], ['gaming', 'systems'],
+]
+const byId = Object.fromEntries(DOMAINS.map((d) => [d.id, d]))
+
+function Constellation({ t, lang }) {
+  const [active, setActive] = useState('core')
+  const node = byId[active]
+  return (
+    <motion.section className="block" id="domains" {...reveal}>
+      <Eyebrow n="01">{t.sec.domains}</Eyebrow>
+      <div className="const-wrap">
+        <svg viewBox="0 0 100 100" className="const-svg" preserveAspectRatio="xMidYMid meet" aria-label="Domains constellation">
+          {LINKS.map(([a, b], i) => {
+            const A = byId[a], B = byId[b], on = active === a || active === b
+            return <motion.line key={i} x1={A.x} y1={A.y} x2={B.x} y2={B.y} className={'c-edge' + (on ? ' on' : '')}
+              initial={{ pathLength: 0, opacity: 0 }} whileInView={{ pathLength: 1, opacity: 1 }}
+              viewport={{ once: true }} transition={{ duration: 1.0, delay: 0.2 + i * 0.05, ease: 'easeOut' }} />
+          })}
+          {DOMAINS.map((d) => (
+            <g key={d.id} className={'c-node' + (active === d.id ? ' on' : '')} tabIndex={0}
+              onPointerEnter={() => setActive(d.id)} onFocus={() => setActive(d.id)} data-cur>
+              <circle className="c-halo" cx={d.x} cy={d.y} r={d.r * 2.6} />
+              <circle className="c-star" cx={d.x} cy={d.y} r={d.r} />
+              <text x={d.x} y={d.y - d.r - 2.4}>{pick(d.label, lang)}</text>
+            </g>
+          ))}
+        </svg>
+        <div className="const-caption">
+          <span className="c-kicker">{lang === 'zh' ? '领域' : 'domain'}</span>
+          <strong>{pick(node.label, lang)}</strong>
+          <p>{pick(node.blurb, lang)}</p>
+        </div>
+      </div>
+    </motion.section>
+  )
+}
+
 function Hero({ t, lang }) {
   const nameRef = useRef(null)
   const heroRef = useRef(null)
@@ -196,7 +246,7 @@ function Hero({ t, lang }) {
 function Work({ t }) {
   return (
     <motion.section className="block" id="work" {...reveal}>
-      <Eyebrow n="01">{t.sec.work}</Eyebrow>
+      <Eyebrow n="02">{t.sec.work}</Eyebrow>
       <div className="work-list">
         {featuredProjects.map((p, i) => (
           <a key={p.slug} className={'work-row' + (i === 0 ? ' flagship' : '')} href={p.repo} target="_blank" rel="noreferrer" data-cur>
@@ -218,7 +268,7 @@ function Work({ t }) {
 function Tracks({ t }) {
   return (
     <motion.section className="block" id="tracks" {...reveal}>
-      <Eyebrow n="02">{t.sec.tracks}</Eyebrow>
+      <Eyebrow n="03">{t.sec.tracks}</Eyebrow>
       <div className="track-grid">
         {tracks.map((tr) => (
           <article key={tr.slug} className="track-card" data-cur>
@@ -236,7 +286,7 @@ function Tracks({ t }) {
 function Signals({ t, lang }) {
   return (
     <motion.section className="block" id="signals" {...reveal}>
-      <Eyebrow n="03">{t.sec.signals}</Eyebrow>
+      <Eyebrow n="04">{t.sec.signals}</Eyebrow>
       <div className="cred-grid">
         {CREDS.map((c, i) => (
           <article key={i} className="cred"><strong>{c.v}</strong><span>{pick(c.k, lang)}</span></article>
@@ -249,7 +299,7 @@ function Signals({ t, lang }) {
 function Path({ t }) {
   return (
     <motion.section className="block" id="path" {...reveal}>
-      <Eyebrow n="04">{t.sec.path}</Eyebrow>
+      <Eyebrow n="05">{t.sec.path}</Eyebrow>
       <ol className="timeline">
         {[...timeline].reverse().map((e, i) => (
           <li key={i}>
@@ -265,7 +315,7 @@ function Path({ t }) {
 function Beyond({ t, lang }) {
   return (
     <motion.section className="block" id="beyond" {...reveal}>
-      <Eyebrow n="05">{t.sec.beyond}</Eyebrow>
+      <Eyebrow n="06">{t.sec.beyond}</Eyebrow>
       <p className="beyond-note">{t.beyondNote}</p>
       <div className="beyond-grid">
         {HOBBIES.map((h) => (
@@ -281,7 +331,7 @@ function Beyond({ t, lang }) {
 function Contact({ t }) {
   return (
     <motion.section className="block contact" id="contact" {...reveal}>
-      <Eyebrow n="06">{t.sec.contact}</Eyebrow>
+      <Eyebrow n="07">{t.sec.contact}</Eyebrow>
       <div className="contact-row">
         <MagLink href={siteLinks.email}>{t.cta.email} ↗</MagLink>
         <MagLink href={siteLinks.github} external>GitHub ↗</MagLink>
@@ -322,7 +372,7 @@ export default function App() {
       <header className="topbar">
         <a className="mark" href="#top" data-cur>RG<span>/</span></a>
         <nav>
-          <a href="#work">{t.nav.work}</a><a href="#tracks">{t.nav.tracks}</a><a href="#signals">{t.nav.signals}</a>
+          <a href="#domains">{t.nav.fields}</a><a href="#work">{t.nav.work}</a><a href="#tracks">{t.nav.tracks}</a><a href="#signals">{t.nav.signals}</a>
           <a href="#path">{t.nav.path}</a><a href="#beyond">{t.nav.beyond}</a><a href="#contact">{t.nav.contact}</a>
         </nav>
         <button className="lang" data-cur onClick={() => setLang(lang === 'en' ? 'zh' : 'en')}>{lang === 'en' ? '中文' : 'EN'}</button>
@@ -332,6 +382,7 @@ export default function App() {
         <Marquee items={lang === 'zh'
           ? ['智能体系统', '量化', '具身智能', '运行时', '记忆架构', '自进化', '机器人', '信号']
           : ['Agent Systems', 'Quant', 'Embodied AI', 'Runtimes', 'Memory', 'Self-Evolving', 'Robotics', 'Signal']} />
+        <Constellation t={t} lang={lang} />
         <Work t={t} />
         <Tracks t={t} />
         <Signals t={t} lang={lang} />

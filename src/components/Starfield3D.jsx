@@ -26,6 +26,19 @@ function starTexture() {
   const t = new THREE.CanvasTexture(c); return t
 }
 
+function ringTexture() {
+  const c = document.createElement('canvas'); c.width = c.height = 256
+  const g = c.getContext('2d')
+  const grd = g.createRadialGradient(128, 128, 24, 128, 128, 128)
+  grd.addColorStop(0, 'rgba(91,233,219,0)')
+  grd.addColorStop(0.5, 'rgba(91,233,219,0)')
+  grd.addColorStop(0.64, 'rgba(160,250,242,0.95)')   // hot inner edge
+  grd.addColorStop(0.78, 'rgba(11,186,181,0.45)')
+  grd.addColorStop(1, 'rgba(11,186,181,0)')
+  g.fillStyle = grd; g.fillRect(0, 0, 256, 256)
+  return new THREE.CanvasTexture(c)
+}
+
 function init(canvas) {
   if (!canvas) return
   const reduce = matchMedia('(prefers-reduced-motion:reduce)').matches
@@ -59,6 +72,20 @@ function init(canvas) {
   const points = new THREE.Points(geo, mat)
   scene.add(points)
 
+  // ── black hole (original): dark event-horizon core + glowing cyan accretion disk ──
+  const hole = new THREE.Group()
+  hole.position.set(0, 0, -1700)
+  const ringTex = ringTexture()
+  const core = new THREE.Mesh(new THREE.SphereGeometry(40, 32, 32), new THREE.MeshBasicMaterial({ color: 0x01030a }))
+  hole.add(core)
+  const disk = new THREE.Mesh(new THREE.RingGeometry(46, 150, 110), new THREE.MeshBasicMaterial({ map: ringTex, transparent: true, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, depthWrite: false }))
+  disk.rotation.x = Math.PI * 0.6
+  hole.add(disk)
+  const glow = new THREE.Mesh(new THREE.RingGeometry(150, 300, 110), new THREE.MeshBasicMaterial({ map: ringTex, transparent: true, opacity: 0.22, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, depthWrite: false }))
+  glow.rotation.x = Math.PI * 0.6
+  hole.add(glow)
+  scene.add(hole)
+
   const resize = () => { renderer.setSize(innerWidth, innerHeight); camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix() }
   resize(); addEventListener('resize', resize)
 
@@ -82,6 +109,11 @@ function init(canvas) {
       }
     }
     geo.attributes.position.needsUpdate = true
+    // black hole drifts toward the camera with the flow + recycles; disk swirls
+    hole.position.z += drift
+    if (hole.position.z > 240) hole.position.z = -2600
+    disk.rotation.z += 0.005 + Math.min(Math.abs(speed), 60) * 0.0008
+    glow.rotation.z -= 0.0025
     camera.rotation.y += (-mouse.x * 0.25 - camera.rotation.y) * 0.04
     camera.rotation.x += (mouse.y * 0.25 - camera.rotation.x) * 0.04
     renderer.render(scene, camera)
@@ -91,6 +123,8 @@ function init(canvas) {
 
   return () => {
     cancelAnimationFrame(raf); removeEventListener('resize', resize); removeEventListener('pointermove', onMove)
-    geo.dispose(); mat.dispose(); tex.dispose(); renderer.dispose()
+    geo.dispose(); mat.dispose(); tex.dispose(); ringTex.dispose()
+    core.geometry.dispose(); core.material.dispose(); disk.geometry.dispose(); disk.material.dispose()
+    glow.geometry.dispose(); glow.material.dispose(); renderer.dispose()
   }
 }

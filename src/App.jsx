@@ -1,10 +1,9 @@
 import { Component, useEffect, useRef, useState } from 'react'
-import { AnimatePresence, motion, useReducedMotion, useScroll, useTransform } from 'framer-motion'
+import { motion, useReducedMotion, useScroll, useTransform } from 'framer-motion'
 import Lenis from 'lenis'
 import './App.css'
 import { Starfield3D } from './components/Starfield3D'
 import { Cursor } from './components/Cursor'
-import { Preloader } from './components/Preloader'
 import { siteLinks, featuredProjects, tracks, timeline } from './siteData'
 
 class ErrorBoundary extends Component {
@@ -347,7 +346,6 @@ function Contact({ t }) {
 
 export default function App() {
   const [lang, setLang] = useState('en')
-  const [loading, setLoading] = useState(true)
   const t = COPY[lang]
   const year = new Date().getFullYear()
 
@@ -364,11 +362,11 @@ export default function App() {
 
   return (
     <ErrorBoundary>
-    <AnimatePresence>{loading && <Preloader key="pre" onDone={() => setLoading(false)} />}</AnimatePresence>
     <div className="shell" data-lang={lang}>
       <Starfield3D />
       <Cursor />
       <div className="grain" aria-hidden="true" />
+      <div className="layer">
       <header className="topbar">
         <a className="mark" href="#top" data-cur>RG<span>/</span></a>
         <nav>
@@ -391,6 +389,7 @@ export default function App() {
         <Contact t={t} />
       </main>
       <footer className="foot"><span>{t.footer}</span><span>© {year} Rongze Gao · rongzegao.com</span></footer>
+      </div>
     </div>
     </ErrorBoundary>
   )

@@ -1,602 +1,267 @@
-import { useMemo, useState } from 'react'
-import { motion } from 'framer-motion'
+import { useEffect, useRef, useState } from 'react'
+import { motion, useReducedMotion } from 'framer-motion'
 import './App.css'
-import { AuroraBackdrop } from './components/AuroraBackdrop'
-import { SignalField } from './components/SignalField'
-import { WaterSurface } from './components/WaterSurface'
-import { siteLinks } from './siteData'
+import { siteLinks, featuredProjects, tracks, timeline } from './siteData'
 
-const MotionSection = motion.section
-const MotionDiv = motion.div
+const pick = (v, lang) => (typeof v === 'string' ? v : (v[lang] ?? v.en))
 
-const pick = (value, lang) => (typeof value === 'string' ? value : (value[lang] ?? value.en))
-
-const TEXT = {
+const COPY = {
   en: {
-    nav: {
-      about: 'About',
-      map: 'Map',
-      works: 'Works',
-      hobbies: 'Hobbies',
-      arcade: 'Arcade',
-      contact: 'Contact',
-    },
-    hero: {
-      eyebrow: 'Personal Signal Hub',
-      title: 'Rongze Gao',
-      subtitle: 'AI Systems · Quant Tools · Embodied Experiments',
-      summary: 'Less text, faster proof. Follow links, explore the graph, open the builds.',
-      primary: 'Open GitHub',
-      secondary: 'View LinkedIn',
-      tertiary: 'Play Web Game',
-    },
-    stats: [
-      { label: 'Current', value: 'JHU MSISAI' },
-      { label: 'Focus', value: 'AI + Systems' },
-      { label: 'Mode', value: 'Research x Builder' },
-    ],
-    map: {
-      eyebrow: 'Relationship Graph',
-      title: 'How work, interests, and projects connect',
-      helper: 'Hover nodes to inspect connections.',
-    },
-    links: {
-      sectionTitle: 'High-signal links',
-      groups: [
-        {
-          title: 'Profiles',
-          items: [
-            { label: 'GitHub', href: siteLinks.github },
-            { label: 'LinkedIn', href: siteLinks.linkedin },
-            { label: 'Email', href: siteLinks.email },
-          ],
-        },
-        {
-          title: 'Featured Builds',
-          items: [
-            { label: 'ANIMA', href: 'https://github.com/zeron-G/anima' },
-            { label: 'Synapse', href: 'https://github.com/zeron-G/Synapse' },
-            { label: 'FinRAG Agent', href: 'https://github.com/zeron-G/FinRAG-Agent' },
-          ],
-        },
-        {
-          title: 'Live Pages',
-          items: [
-            { label: 'Portfolio', href: 'https://rongzegao.com' },
-            { label: 'Arcade Game', href: './game.html' },
-            { label: 'GitHub Repo', href: 'https://github.com/zeron-G/rongze-gao-portfolio' },
-          ],
-        },
-      ],
-    },
-    works: {
-      eyebrow: 'Web + Projects',
-      title: 'Compact cards, direct links',
-      action: 'Open',
-    },
-    hobbies: {
-      eyebrow: 'Interests',
-      title: 'Outside the terminal',
-      scale: 'engagement',
-    },
-    arcade: {
-      eyebrow: 'Extra Feature',
-      title: 'Nebula Coil',
-      summary:
-        'A standalone 3D-style snake page with local leaderboard. Built as a playful side mission inside the portfolio.',
-      cta: 'Launch game page',
-    },
-    contact: {
-      eyebrow: 'Contact',
-      title: 'Reach me quickly',
-      summary: 'Best response channels are email and GitHub.',
-      email: 'Send email',
-      github: 'Open GitHub',
-      linkedin: 'Open LinkedIn',
-    },
-    graphDescriptions: {
-      core: 'Center node: ties research, engineering, and personal exploration.',
-      ai: 'Agent frameworks and applied AI systems.',
-      quant: 'Finance, analysis pipelines, and data-driven decisions.',
-      embodied: 'Robotics, deployment, and real-world constraints.',
-      fpv: 'FPV drone practice for control, rhythm, and spatial judgment.',
-      gaming: 'Game design/gameplay as a systems-thinking playground.',
-      flight: 'Aviation training mindset: procedure, safety, and precision.',
-      web: 'Portfolio and interactive web experiences.',
-    },
-    footer: 'Designed as a fast-scan interface with multilingual support.',
+    nav: { work: 'Work', tracks: 'Tracks', signals: 'Signals', path: 'Path', beyond: 'Beyond', contact: 'Contact' },
+    status: 'Online · open to AI / quant / robotics roles',
+    role: 'AI Systems · Quant · Embodied Intelligence',
+    intro: 'I build systems that stay alive — agents with memory, runtimes that hold under load, models that meet the physical world. Johns Hopkins MSISAI. Research-grade and builder-grade at once.',
+    cta: { github: 'GitHub', email: 'Email', resume: 'Web Game', priv: 'Private' },
+    sec: { work: 'Selected Work', tracks: 'Read Me By Track', signals: 'Signals', path: 'Trajectory', beyond: 'Beyond The Terminal', contact: 'Reach Me' },
+    flagship: 'Flagship · live',
+    open: 'Open repo',
+    beyondNote: 'The instincts behind the systems — control, rhythm, spatial judgement, procedure.',
+    privNote: 'A private space — Eva (a living, self-evolving AI) and personal services live behind an email gate.',
+    privCta: 'Enter the private hub',
+    footer: 'Built + deployed by its owner. Bilingual.',
   },
-  'zh-CN': {
-    nav: {
-      about: '主页',
-      map: '关系图',
-      works: '作品',
-      hobbies: '爱好',
-      arcade: '游戏',
-      contact: '联系',
-    },
-    hero: {
-      eyebrow: '个人信号中枢',
-      title: '高荣泽',
-      subtitle: 'AI 系统 · 量化工具 · 具身实验',
-      summary: '减少文字，提升信号密度。用链接、关系图和作品快速建立认知。',
-      primary: '打开 GitHub',
-      secondary: '查看领英',
-      tertiary: '打开网页游戏',
-    },
-    stats: [
-      { label: '当前', value: 'JHU MSISAI' },
-      { label: '方向', value: 'AI + 系统' },
-      { label: '风格', value: '研究 x 构建' },
-    ],
-    map: {
-      eyebrow: '关系图谱',
-      title: '工作、兴趣与项目的连接方式',
-      helper: '悬停节点可查看关联。',
-    },
-    links: {
-      sectionTitle: '高价值链接',
-      groups: [
-        {
-          title: '主页身份',
-          items: [
-            { label: 'GitHub', href: siteLinks.github },
-            { label: '领英', href: siteLinks.linkedin },
-            { label: '邮箱', href: siteLinks.email },
-          ],
-        },
-        {
-          title: '代表项目',
-          items: [
-            { label: 'ANIMA', href: 'https://github.com/zeron-G/anima' },
-            { label: 'Synapse', href: 'https://github.com/zeron-G/Synapse' },
-            { label: 'FinRAG Agent', href: 'https://github.com/zeron-G/FinRAG-Agent' },
-          ],
-        },
-        {
-          title: '在线页面',
-          items: [
-            { label: '个人网站', href: 'https://rongzegao.com' },
-            { label: '网页游戏', href: './game.html' },
-            { label: '网站仓库', href: 'https://github.com/zeron-G/rongze-gao-portfolio' },
-          ],
-        },
-      ],
-    },
-    works: {
-      eyebrow: '个人网站与作品',
-      title: '少文字，多入口',
-      action: '访问',
-    },
-    hobbies: {
-      eyebrow: '个人爱好',
-      title: '代码之外',
-      scale: '投入度',
-    },
-    arcade: {
-      eyebrow: '其他功能',
-      title: 'Nebula Coil',
-      summary: '独立网页小游戏，3D 风格贪吃蛇，内置本地排行榜，作为网站内的互动模块。',
-      cta: '进入游戏页面',
-    },
-    contact: {
-      eyebrow: '联系方式',
-      title: '快速联系',
-      summary: '最快的沟通方式是邮箱和 GitHub。',
-      email: '发送邮件',
-      github: '打开 GitHub',
-      linkedin: '打开领英',
-    },
-    graphDescriptions: {
-      core: '中心节点：连接研究、工程和个人探索。',
-      ai: '智能体框架与应用型 AI 系统。',
-      quant: '金融分析管线与数据驱动决策。',
-      embodied: '机器人部署与真实环境约束。',
-      fpv: '穿越机训练，强调控制、节奏与空间判断。',
-      gaming: '游戏体验与设计，作为系统思维实验场。',
-      flight: '飞行训练思维：流程、安全与精度。',
-      web: '个人网站与交互式网页体验。',
-    },
-    footer: '该版本强调快速浏览、可视化和中英切换。',
+  zh: {
+    nav: { work: '作品', tracks: '路径', signals: '信号', path: '轨迹', beyond: '之外', contact: '联系' },
+    status: '在线 · 开放 AI / 量化 / 机器人方向机会',
+    role: 'AI 系统 · 量化 · 具身智能',
+    intro: '我做"活着"的系统 —— 有记忆的智能体、扛得住负载的运行时、能触及物理世界的模型。约翰霍普金斯 MSISAI。研究级与工程级,二者兼具。',
+    cta: { github: 'GitHub', email: '邮箱', resume: '网页游戏', priv: '私域' },
+    sec: { work: '选录作品', tracks: '按路径阅读', signals: '信号', path: '轨迹', beyond: '终端之外', contact: '联系我' },
+    flagship: '旗舰 · 已上线',
+    open: '打开仓库',
+    beyondNote: '系统背后的直觉 —— 控制、节奏、空间判断、流程。',
+    privNote: '一处私域 —— Eva(一个活着的、自进化的 AI)与个人服务,藏在邮箱门之后。',
+    privCta: '进入私域',
+    footer: '由本人构建并部署。中英双语。',
   },
 }
 
-const WORK_ITEMS = [
-  {
-    id: 'portfolio',
-    title: { en: 'Personal Website', 'zh-CN': '个人网站' },
-    tag: { en: 'Web Presence', 'zh-CN': '网站呈现' },
-    href: 'https://rongzegao.com',
-    accent: 'cyan',
-  },
-  {
-    id: 'anima',
-    title: 'ANIMA',
-    tag: { en: 'Agent Framework', 'zh-CN': '智能体框架' },
-    href: 'https://github.com/zeron-G/anima',
-    accent: 'blue',
-  },
-  {
-    id: 'synapse',
-    title: 'Synapse',
-    tag: { en: 'Runtime Bridge', 'zh-CN': '运行时桥接' },
-    href: 'https://github.com/zeron-G/Synapse',
-    accent: 'teal',
-  },
-  {
-    id: 'finrag',
-    title: 'FinRAG Agent',
-    tag: { en: 'Finance AI', 'zh-CN': '金融 AI' },
-    href: 'https://github.com/zeron-G/FinRAG-Agent',
-    accent: 'gold',
-  },
-  {
-    id: 'github',
-    title: 'GitHub Profile',
-    tag: { en: 'Open Source', 'zh-CN': '开源档案' },
-    href: siteLinks.github,
-    accent: 'slate',
-  },
-  {
-    id: 'arcade',
-    title: 'Nebula Coil',
-    tag: { en: 'Web Game', 'zh-CN': '网页游戏' },
-    href: './game.html',
-    accent: 'orange',
-  },
+const CREDS = [
+  { v: 'JHU', k: { en: 'MSISAI · Johns Hopkins', zh: 'MSISAI · 约翰霍普金斯' } },
+  { v: 'CQF', k: { en: 'with Distinction', zh: '优秀等级' } },
+  { v: 'Gold', k: { en: 'WorldQuant Brain', zh: 'WorldQuant 金级' } },
+  { v: 'Bronze', k: { en: 'Kaggle · Optiver', zh: 'Kaggle · Optiver 铜牌' } },
+  { v: '$20K', k: { en: 'Ward Infinity grant · 1st', zh: 'Ward Infinity 资助 · 第一' } },
+  { v: 'CFA', k: { en: 'Research Challenge', zh: '研究挑战赛' } },
 ]
 
 const HOBBIES = [
-  {
-    id: 'fpv',
-    name: { en: 'FPV Drone', 'zh-CN': '穿越机' },
-    note: { en: 'Control and reflex training', 'zh-CN': '控制力与反应训练' },
-    level: 86,
-  },
-  {
-    id: 'robotics',
-    name: { en: 'Robotics', 'zh-CN': '机器人' },
-    note: { en: 'Embodied thinking and deployment', 'zh-CN': '具身智能与部署思维' },
-    level: 78,
-  },
-  {
-    id: 'gaming',
-    name: { en: 'Gaming', 'zh-CN': '打游戏' },
-    note: { en: 'System balance and interaction intuition', 'zh-CN': '系统平衡与交互直觉' },
-    level: 82,
-  },
-  {
-    id: 'flight',
-    name: { en: 'Flying', 'zh-CN': '开飞机' },
-    note: { en: 'Procedure discipline and spatial judgment', 'zh-CN': '流程纪律与空间判断' },
-    level: 74,
-  },
+  { code: 'FPV', name: { en: 'FPV Drone', zh: '穿越机' }, note: { en: 'control + reflex', zh: '控制 + 反应' } },
+  { code: 'AIR', name: { en: 'Flying', zh: '开飞机' }, note: { en: 'procedure + precision', zh: '流程 + 精度' } },
+  { code: 'BOT', name: { en: 'Robotics', zh: '机器人' }, note: { en: 'embodied thinking', zh: '具身思维' } },
+  { code: 'PLY', name: { en: 'Gaming', zh: '打游戏' }, note: { en: 'systems intuition', zh: '系统直觉' } },
 ]
 
-const GRAPH_NODES = [
-  { id: 'core', x: 50, y: 50, size: 8, label: { en: 'Rongze', 'zh-CN': '荣泽' }, tone: 'core' },
-  { id: 'ai', x: 22, y: 24, size: 5.4, label: { en: 'AI', 'zh-CN': 'AI' }, tone: 'cyan' },
-  { id: 'quant', x: 76, y: 22, size: 5.2, label: { en: 'Quant', 'zh-CN': '量化' }, tone: 'blue' },
-  { id: 'embodied', x: 17, y: 72, size: 5.1, label: { en: 'Robotics', 'zh-CN': '机器人' }, tone: 'teal' },
-  { id: 'web', x: 81, y: 67, size: 5.2, label: { en: 'Web', 'zh-CN': '网页' }, tone: 'cyan' },
-  { id: 'fpv', x: 39, y: 14, size: 4.4, label: { en: 'FPV', 'zh-CN': '穿越机' }, tone: 'orange' },
-  { id: 'gaming', x: 64, y: 84, size: 4.5, label: { en: 'Gaming', 'zh-CN': '游戏' }, tone: 'orange' },
-  { id: 'flight', x: 89, y: 48, size: 4.4, label: { en: 'Flight', 'zh-CN': '飞行' }, tone: 'gold' },
-]
+const CSET = 'ABCDEFGHJKMNPQRSTUVWXYZ0123456789/<>{}#$=*'
 
-const GRAPH_EDGES = [
-  ['core', 'ai'],
-  ['core', 'quant'],
-  ['core', 'embodied'],
-  ['core', 'web'],
-  ['core', 'fpv'],
-  ['core', 'gaming'],
-  ['core', 'flight'],
-  ['ai', 'quant'],
-  ['ai', 'web'],
-  ['embodied', 'fpv'],
-  ['web', 'gaming'],
-]
+function useDecode(finalText, active, dur = 900) {
+  const [text, setText] = useState(finalText)
+  const reduce = useReducedMotion()
+  useEffect(() => {
+    if (!active || reduce) { setText(finalText); return }
+    let raf, start
+    const step = (now) => {
+      if (!start) start = now
+      const p = Math.min(1, (now - start) / dur)
+      const reveal = Math.floor(p * finalText.length)
+      let out = ''
+      for (let i = 0; i < finalText.length; i++) {
+        out += i < reveal || finalText[i] === ' ' ? finalText[i] : CSET[(Math.random() * CSET.length) | 0]
+      }
+      setText(out)
+      if (p < 1) raf = requestAnimationFrame(step); else setText(finalText)
+    }
+    raf = requestAnimationFrame(step)
+    return () => cancelAnimationFrame(raf)
+  }, [finalText, active, dur, reduce])
+  return text
+}
 
-function LanguageSwitch({ lang, onChange }) {
+function Eyebrow({ n, children }) {
   return (
-    <div className="language-switch" role="tablist" aria-label="Language selector">
-      <button
-        type="button"
-        role="tab"
-        aria-selected={lang === 'en'}
-        className={lang === 'en' ? 'is-active' : ''}
-        onClick={() => onChange('en')}
-      >
-        EN
-      </button>
-      <button
-        type="button"
-        role="tab"
-        aria-selected={lang === 'zh-CN'}
-        className={lang === 'zh-CN' ? 'is-active' : ''}
-        onClick={() => onChange('zh-CN')}
-      >
-        简体中文
-      </button>
-    </div>
+    <div className="eyebrow"><span className="eyebrow-n">{n}</span><span className="eyebrow-t">{children}</span></div>
   )
 }
 
-function RelationshipGraph({ lang, descriptions, helper }) {
-  const [activeId, setActiveId] = useState('core')
+const reveal = {
+  initial: { opacity: 0, y: 26 },
+  whileInView: { opacity: 1, y: 0 },
+  viewport: { once: true, amount: 0.2 },
+  transition: { duration: 0.7, ease: [0.16, 1, 0.3, 1] },
+}
 
-  const nodeMap = useMemo(
-    () => Object.fromEntries(GRAPH_NODES.map((node) => [node.id, node])),
-    [],
-  )
-
-  const activeNode = nodeMap[activeId]
-
+function Hero({ t, lang }) {
+  const [booted, setBooted] = useState(false)
+  useEffect(() => { const id = setTimeout(() => setBooted(true), 220); return () => clearTimeout(id) }, [])
+  const name = useDecode(lang === 'zh' ? '高荣泽' : 'RONGZE GAO', booted, 1000)
   return (
-    <div className="graph-shell">
-      <svg viewBox="0 0 100 100" className="relation-graph" aria-label="Relationship graph">
-        {GRAPH_EDGES.map(([from, to]) => {
-          const left = nodeMap[from]
-          const right = nodeMap[to]
-          const isActive = activeId === from || activeId === to
+    <section className="hero" id="top">
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6 }}>
+        <div className="status"><span className="pulse" />{t.status}</div>
+        <h1 className="name" data-zh={lang === 'zh'}>{name}</h1>
+        <p className="role">{t.role}</p>
+        <p className="intro">{t.intro}</p>
+        <div className="hero-cta">
+          <a href={siteLinks.github} target="_blank" rel="noreferrer">{t.cta.github} ↗</a>
+          <a href={siteLinks.email}>{t.cta.email}</a>
+          <a href="./game.html">{t.cta.resume}</a>
+          <a className="priv-link" href="https://private.rongzegao.com">◆ {t.cta.priv}</a>
+        </div>
+      </motion.div>
+    </section>
+  )
+}
 
-          return (
-            <line
-              key={`${from}-${to}`}
-              x1={left.x}
-              y1={left.y}
-              x2={right.x}
-              y2={right.y}
-              className={isActive ? 'graph-edge is-active' : 'graph-edge'}
-            />
-          )
-        })}
-
-        {GRAPH_NODES.map((node) => (
-          <g
-            key={node.id}
-            className={activeId === node.id ? 'graph-node is-active' : 'graph-node'}
-            onPointerEnter={() => setActiveId(node.id)}
-            onFocus={() => setActiveId(node.id)}
-            tabIndex={0}
-          >
-            <circle cx={node.x} cy={node.y} r={node.size} data-tone={node.tone} />
-            <text x={node.x} y={node.y + node.size + 4.2}>
-              {pick(node.label, lang)}
-            </text>
-          </g>
+function Work({ t, lang }) {
+  return (
+    <motion.section className="block" id="work" {...reveal}>
+      <Eyebrow n="01">{t.sec.work}</Eyebrow>
+      <div className="work-list">
+        {featuredProjects.map((p, i) => (
+          <a key={p.slug} className={'work-row' + (i === 0 ? ' flagship' : '')} href={p.repo} target="_blank" rel="noreferrer">
+            <span className="work-idx">{String(i + 1).padStart(2, '0')}</span>
+            <span className="work-main">
+              <strong>{p.name}{i === 0 && <em className="flag">{t.flagship}</em>}</strong>
+              <span className="work-one">{p.oneLiner}</span>
+              <span className="work-stack">{p.stack.join(' · ')}</span>
+            </span>
+            <span className="work-type">{p.type}</span>
+            <span className="work-go">{t.open} ↗</span>
+          </a>
         ))}
-      </svg>
-
-      <div className="graph-caption">
-        <strong>{pick(activeNode.label, lang)}</strong>
-        <p>{descriptions[activeNode.id]}</p>
-        <small>{helper}</small>
       </div>
-    </div>
+    </motion.section>
   )
 }
 
-function App() {
-  const [lang, setLang] = useState('en')
-  const t = TEXT[lang]
-  const year = new Date().getFullYear()
-
+function Tracks({ t, lang }) {
   return (
-    <div className="app-shell">
-      <AuroraBackdrop />
-      <WaterSurface />
+    <motion.section className="block" id="tracks" {...reveal}>
+      <Eyebrow n="02">{t.sec.tracks}</Eyebrow>
+      <div className="track-grid">
+        {tracks.map((tr) => (
+          <article key={tr.slug} className="track-card">
+            <span className="track-kicker">{tr.kicker}</span>
+            <h3>{tr.title}</h3>
+            <p>{tr.summary}</p>
+            <div className="track-roles">{tr.roles.map((r) => <span key={r}>{r}</span>)}</div>
+          </article>
+        ))}
+      </div>
+    </motion.section>
+  )
+}
 
-      <header className="site-header">
-        <a className="site-mark" href="#about">
-          Rongze Gao
-        </a>
+function Signals({ t, lang }) {
+  return (
+    <motion.section className="block" id="signals" {...reveal}>
+      <Eyebrow n="03">{t.sec.signals}</Eyebrow>
+      <div className="cred-grid">
+        {CREDS.map((c, i) => (
+          <article key={i} className="cred">
+            <strong>{c.v}</strong>
+            <span>{pick(c.k, lang)}</span>
+          </article>
+        ))}
+      </div>
+    </motion.section>
+  )
+}
 
+function Path({ t, lang }) {
+  return (
+    <motion.section className="block" id="path" {...reveal}>
+      <Eyebrow n="04">{t.sec.path}</Eyebrow>
+      <ol className="timeline">
+        {[...timeline].reverse().map((e, i) => (
+          <li key={i}>
+            <span className="tl-period">{e.period}</span>
+            <div className="tl-body">
+              <strong>{e.title}</strong>
+              <span className="tl-place">{e.place}</span>
+              <p>{e.summary}</p>
+            </div>
+          </li>
+        ))}
+      </ol>
+    </motion.section>
+  )
+}
+
+function Beyond({ t, lang }) {
+  return (
+    <motion.section className="block" id="beyond" {...reveal}>
+      <Eyebrow n="05">{t.sec.beyond}</Eyebrow>
+      <p className="beyond-note">{t.beyondNote}</p>
+      <div className="beyond-grid">
+        {HOBBIES.map((h) => (
+          <article key={h.code} className="beyond-card">
+            <span className="beyond-code">{h.code}</span>
+            <strong>{pick(h.name, lang)}</strong>
+            <span className="beyond-sub">{pick(h.note, lang)}</span>
+          </article>
+        ))}
+      </div>
+    </motion.section>
+  )
+}
+
+function Contact({ t, lang }) {
+  return (
+    <motion.section className="block contact" id="contact" {...reveal}>
+      <Eyebrow n="06">{t.sec.contact}</Eyebrow>
+      <div className="contact-row">
+        <a href={siteLinks.email}>{t.cta.email} ↗</a>
+        <a href={siteLinks.github} target="_blank" rel="noreferrer">GitHub ↗</a>
+        <a href={siteLinks.linkedin} target="_blank" rel="noreferrer">LinkedIn ↗</a>
+      </div>
+      <div className="priv-panel">
+        <span className="lock">◆</span>
+        <div>
+          <p>{t.privNote}</p>
+          <a href="https://private.rongzegao.com">{t.privCta} →</a>
+        </div>
+      </div>
+    </motion.section>
+  )
+}
+
+export default function App() {
+  const [lang, setLang] = useState('en')
+  const t = COPY[lang]
+  const year = new Date().getFullYear()
+  return (
+    <div className="shell" data-lang={lang}>
+      <div className="grain" aria-hidden="true" />
+      <header className="topbar">
+        <a className="mark" href="#top">RG<span>/</span></a>
         <nav>
-          <a href="#about">{t.nav.about}</a>
-          <a href="#map">{t.nav.map}</a>
-          <a href="#works">{t.nav.works}</a>
-          <a href="#hobbies">{t.nav.hobbies}</a>
-          <a href="#arcade">{t.nav.arcade}</a>
+          <a href="#work">{t.nav.work}</a>
+          <a href="#tracks">{t.nav.tracks}</a>
+          <a href="#signals">{t.nav.signals}</a>
+          <a href="#path">{t.nav.path}</a>
+          <a href="#beyond">{t.nav.beyond}</a>
           <a href="#contact">{t.nav.contact}</a>
         </nav>
-
-        <LanguageSwitch lang={lang} onChange={setLang} />
+        <button className="lang" onClick={() => setLang(lang === 'en' ? 'zh' : 'en')}>
+          {lang === 'en' ? '中文' : 'EN'}
+        </button>
       </header>
 
       <main>
-        <MotionSection
-          className="hero-section"
-          id="about"
-          initial={{ opacity: 0, y: 28 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.72, ease: [0.22, 1, 0.36, 1] }}
-        >
-          <div className="hero-copy">
-            <p className="eyebrow">{t.hero.eyebrow}</p>
-            <h1>{t.hero.title}</h1>
-            <p className="hero-subtitle">{t.hero.subtitle}</p>
-            <p className="hero-summary">{t.hero.summary}</p>
-
-            <div className="hero-actions">
-              <a href={siteLinks.github} target="_blank" rel="noreferrer">
-                {t.hero.primary}
-              </a>
-              <a href={siteLinks.linkedin} target="_blank" rel="noreferrer">
-                {t.hero.secondary}
-              </a>
-              <a href="./game.html">{t.hero.tertiary}</a>
-            </div>
-
-            <div className="stat-grid">
-              {t.stats.map((item) => (
-                <article key={item.label}>
-                  <span>{item.label}</span>
-                  <strong>{item.value}</strong>
-                </article>
-              ))}
-            </div>
-          </div>
-
-          <div className="hero-visual">
-            <SignalField />
-            <div className="hero-radar">
-              <p>{lang === 'en' ? 'Signal density' : '信号密度'}</p>
-              <strong>High</strong>
-            </div>
-            <div className="hero-radar second">
-              <p>{lang === 'en' ? 'Narrative mode' : '叙事模式'}</p>
-              <strong>{lang === 'en' ? 'Visual first' : '视觉优先'}</strong>
-            </div>
-          </div>
-        </MotionSection>
-
-        <MotionSection
-          className="map-section"
-          id="map"
-          initial={{ opacity: 0, y: 24 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.24 }}
-          transition={{ duration: 0.62, ease: [0.22, 1, 0.36, 1] }}
-        >
-          <div className="section-heading">
-            <p className="eyebrow">{t.map.eyebrow}</p>
-            <h2>{t.map.title}</h2>
-          </div>
-
-          <div className="map-layout">
-            <RelationshipGraph
-              lang={lang}
-              descriptions={t.graphDescriptions}
-              helper={t.map.helper}
-            />
-
-            <aside className="link-matrix">
-              <h3>{t.links.sectionTitle}</h3>
-              {t.links.groups.map((group) => (
-                <article key={group.title}>
-                  <span>{group.title}</span>
-                  <div>
-                    {group.items.map((item) => (
-                      <a key={item.label} href={item.href} target="_blank" rel="noreferrer">
-                        {item.label}
-                      </a>
-                    ))}
-                  </div>
-                </article>
-              ))}
-            </aside>
-          </div>
-        </MotionSection>
-
-        <MotionSection
-          className="works-section"
-          id="works"
-          initial={{ opacity: 0, y: 24 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.2 }}
-          transition={{ duration: 0.58, ease: [0.22, 1, 0.36, 1] }}
-        >
-          <div className="section-heading">
-            <p className="eyebrow">{t.works.eyebrow}</p>
-            <h2>{t.works.title}</h2>
-          </div>
-
-          <div className="work-grid">
-            {WORK_ITEMS.map((item) => (
-              <a
-                key={item.id}
-                href={item.href}
-                className="work-card"
-                target={item.href.startsWith('http') ? '_blank' : undefined}
-                rel={item.href.startsWith('http') ? 'noreferrer' : undefined}
-                data-accent={item.accent}
-              >
-                <span>{pick(item.tag, lang)}</span>
-                <strong>{pick(item.title, lang)}</strong>
-                <em>{t.works.action}</em>
-              </a>
-            ))}
-          </div>
-        </MotionSection>
-
-        <MotionSection
-          className="hobbies-section"
-          id="hobbies"
-          initial={{ opacity: 0, y: 24 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.2 }}
-          transition={{ duration: 0.56, ease: [0.22, 1, 0.36, 1] }}
-        >
-          <div className="section-heading">
-            <p className="eyebrow">{t.hobbies.eyebrow}</p>
-            <h2>{t.hobbies.title}</h2>
-          </div>
-
-          <div className="hobby-grid">
-            {HOBBIES.map((hobby) => (
-              <article key={hobby.id} className="hobby-card">
-                <div className="hobby-top">
-                  <strong>{pick(hobby.name, lang)}</strong>
-                  <span>{hobby.level}%</span>
-                </div>
-                <p>{pick(hobby.note, lang)}</p>
-                <div className="hobby-meter" aria-label={`${pick(hobby.name, lang)} ${t.hobbies.scale}`}>
-                  <div style={{ width: `${hobby.level}%` }} />
-                </div>
-              </article>
-            ))}
-          </div>
-        </MotionSection>
-
-        <MotionDiv
-          className="arcade-banner"
-          id="arcade"
-          initial={{ opacity: 0, y: 24 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.3 }}
-          transition={{ duration: 0.56, ease: [0.22, 1, 0.36, 1] }}
-        >
-          <div className="arcade-copy">
-            <p className="eyebrow">{t.arcade.eyebrow}</p>
-            <h2>{t.arcade.title}</h2>
-            <p>{t.arcade.summary}</p>
-          </div>
-          <a href="./game.html">{t.arcade.cta}</a>
-        </MotionDiv>
-
-        <MotionSection
-          className="contact-section"
-          id="contact"
-          initial={{ opacity: 0, y: 24 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.3 }}
-          transition={{ duration: 0.56, ease: [0.22, 1, 0.36, 1] }}
-        >
-          <div className="section-heading">
-            <p className="eyebrow">{t.contact.eyebrow}</p>
-            <h2>{t.contact.title}</h2>
-            <p className="contact-summary">{t.contact.summary}</p>
-          </div>
-          <div className="contact-links">
-            <a href={siteLinks.email}>{t.contact.email}</a>
-            <a href={siteLinks.github} target="_blank" rel="noreferrer">
-              {t.contact.github}
-            </a>
-            <a href={siteLinks.linkedin} target="_blank" rel="noreferrer">
-              {t.contact.linkedin}
-            </a>
-          </div>
-        </MotionSection>
+        <Hero t={t} lang={lang} />
+        <Work t={t} lang={lang} />
+        <Tracks t={t} lang={lang} />
+        <Signals t={t} lang={lang} />
+        <Path t={t} lang={lang} />
+        <Beyond t={t} lang={lang} />
+        <Contact t={t} lang={lang} />
       </main>
 
-      <footer className="site-footer">
+      <footer className="foot">
         <span>{t.footer}</span>
-        <span>{year}</span>
+        <span>© {year} Rongze Gao · rongzegao.com</span>
       </footer>
     </div>
   )
 }
-
-export default App

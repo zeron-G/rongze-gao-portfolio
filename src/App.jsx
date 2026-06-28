@@ -2,7 +2,7 @@ import { Component, useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion, useScroll, useTransform } from 'framer-motion'
 import Lenis from 'lenis'
 import './App.css'
-import { ShaderField } from './components/ShaderField'
+import { Starfield3D } from './components/Starfield3D'
 import { Cursor } from './components/Cursor'
 import { Preloader } from './components/Preloader'
 import { siteLinks, featuredProjects, tracks, timeline } from './siteData'
@@ -366,7 +366,7 @@ export default function App() {
     <ErrorBoundary>
     <AnimatePresence>{loading && <Preloader key="pre" onDone={() => setLoading(false)} />}</AnimatePresence>
     <div className="shell" data-lang={lang}>
-      <ShaderField />
+      <Starfield3D />
       <Cursor />
       <div className="grain" aria-hidden="true" />
       <header className="topbar">

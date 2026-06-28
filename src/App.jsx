@@ -1,9 +1,10 @@
 import { Component, useEffect, useRef, useState } from 'react'
-import { motion, useReducedMotion, useScroll, useTransform } from 'framer-motion'
+import { AnimatePresence, motion, useReducedMotion, useScroll, useTransform } from 'framer-motion'
 import Lenis from 'lenis'
 import './App.css'
 import { ShaderField } from './components/ShaderField'
 import { Cursor } from './components/Cursor'
+import { Preloader } from './components/Preloader'
 import { siteLinks, featuredProjects, tracks, timeline } from './siteData'
 
 class ErrorBoundary extends Component {
@@ -130,8 +131,34 @@ const reveal = {
   transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] },
 }
 
+/* masked line-rise reveal on scroll-into-view */
+function RevealText({ text, className = '', delay = 0 }) {
+  const reduce = useReducedMotion()
+  if (reduce) return <span className={className}>{text}</span>
+  return (
+    <span className={'reveal-mask ' + className}>
+      <motion.span className="reveal-inner" initial={{ y: '118%' }} whileInView={{ y: 0 }}
+        viewport={{ once: true, amount: 0.6 }} transition={{ duration: 0.85, ease: [0.16, 1, 0.3, 1], delay }}>
+        {text}
+      </motion.span>
+    </span>
+  )
+}
+
+/* endless kinetic keyword band */
+function Marquee({ items }) {
+  const row = [...items, ...items]
+  return (
+    <div className="marquee" aria-hidden="true">
+      <div className="marquee-track">
+        {row.map((s, i) => <span key={i} className="mq-item">{s}<i>✦</i></span>)}
+      </div>
+    </div>
+  )
+}
+
 function Eyebrow({ n, children }) {
-  return <div className="eyebrow"><span className="eyebrow-n">{n}</span><Scramble className="eyebrow-t" text={children} /></div>
+  return <div className="eyebrow"><span className="eyebrow-n">{n}</span><RevealText className="eyebrow-t" text={children} /></div>
 }
 
 function Hero({ t, lang }) {
@@ -270,6 +297,7 @@ function Contact({ t }) {
 
 export default function App() {
   const [lang, setLang] = useState('en')
+  const [loading, setLoading] = useState(true)
   const t = COPY[lang]
   const year = new Date().getFullYear()
 
@@ -286,6 +314,7 @@ export default function App() {
 
   return (
     <ErrorBoundary>
+    <AnimatePresence>{loading && <Preloader key="pre" onDone={() => setLoading(false)} />}</AnimatePresence>
     <div className="shell" data-lang={lang}>
       <ShaderField />
       <Cursor />
@@ -300,6 +329,9 @@ export default function App() {
       </header>
       <main>
         <Hero t={t} lang={lang} />
+        <Marquee items={lang === 'zh'
+          ? ['智能体系统', '量化', '具身智能', '运行时', '记忆架构', '自进化', '机器人', '信号']
+          : ['Agent Systems', 'Quant', 'Embodied AI', 'Runtimes', 'Memory', 'Self-Evolving', 'Robotics', 'Signal']} />
         <Work t={t} />
         <Tracks t={t} />
         <Signals t={t} lang={lang} />

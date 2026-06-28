@@ -37,18 +37,17 @@ void main(){
   // mouse glow
   vec2 m = u_mouse; m.y = 1.0 - m.y;
   float md = distance(uv, m);
-  float glow = smoothstep(0.42, 0.0, md) * (0.35 + 0.65*u_react);
+  float glow = smoothstep(0.58, 0.0, md) * (0.5 + 0.8*u_react);
 
   vec3 ink   = vec3(0.039, 0.043, 0.055);
-  vec3 deep  = vec3(0.071, 0.078, 0.094);
-  vec3 amber = vec3(0.941, 0.663, 0.235);
+  vec3 deep  = vec3(0.082, 0.090, 0.110);
+  vec3 amber = vec3(0.957, 0.663, 0.235);
 
-  float bands = smoothstep(0.45, 0.95, f);
-  vec3 col = mix(ink, deep, smoothstep(0.2, 0.8, f));
-  col += amber * pow(bands, 2.4) * 0.16;          // faint ember filaments
-  col += amber * glow * (0.10 + 0.18*pow(bands,2.0)); // cursor brightening
-  // vignette
-  col *= 1.0 - 0.5*pow(length(p*vec2(0.7,1.0)), 2.2);
+  float bands = smoothstep(0.36, 0.97, f);
+  vec3 col = mix(ink, deep, smoothstep(0.10, 0.86, f));
+  col += amber * pow(bands, 1.8) * 0.38;             // ember filaments (visible)
+  col += amber * glow * (0.24 + 0.45*pow(bands,1.7)); // cursor brightening
+  col *= 1.0 - 0.40*pow(length(p*vec2(0.72,1.0)), 2.2); // soft vignette
   gl_FragColor = vec4(col, 1.0);
 }
 `

@@ -1,10 +1,25 @@
-import { useEffect, useRef, useState } from 'react'
+import { Component, useEffect, useRef, useState } from 'react'
 import { motion, useReducedMotion, useScroll, useTransform } from 'framer-motion'
 import Lenis from 'lenis'
 import './App.css'
 import { ShaderField } from './components/ShaderField'
 import { Cursor } from './components/Cursor'
 import { siteLinks, featuredProjects, tracks, timeline } from './siteData'
+
+class ErrorBoundary extends Component {
+  constructor(p) { super(p); this.state = { err: null } }
+  static getDerivedStateFromError(err) { return { err } }
+  componentDidCatch(err, info) { console.error('Portfolio crash:', err, info) }
+  render() {
+    if (this.state.err) return (
+      <div style={{ padding: '48px 6vw', fontFamily: 'monospace', color: '#ECEAE3', background: '#0A0B0E', minHeight: '100vh' }}>
+        <p style={{ color: '#F0A93C', letterSpacing: '.1em' }}>RENDER ERROR</p>
+        <pre style={{ whiteSpace: 'pre-wrap', color: '#8E8A80', fontSize: 12, marginTop: 12 }}>{String(this.state.err?.stack || this.state.err)}</pre>
+      </div>
+    )
+    return this.props.children
+  }
+}
 
 const pick = (v, lang) => (typeof v === 'string' ? v : (v[lang] ?? v.en))
 const CSET = 'ABCDEFGHJKMNPQRSTUVWXYZ0123456789/<>{}#$=*'
@@ -125,7 +140,6 @@ function Hero({ t, lang }) {
   const reduce = useReducedMotion()
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ['start start', 'end start'] })
   const nameY = useTransform(scrollYProgress, [0, 1], [0, 140])
-  const fade = useTransform(scrollYProgress, [0, 0.85], [1, 0])
   const finalName = lang === 'zh' ? '高荣泽' : 'RONGZE GAO'
   useEffect(() => {
     const el = nameRef.current; if (!el) return
@@ -135,7 +149,7 @@ function Hero({ t, lang }) {
   }, [finalName, reduce])
   return (
     <section className="hero" id="top" ref={heroRef}>
-      <motion.div style={{ opacity: fade }} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6 }}>
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6 }}>
         <div className="status"><span className="pulse" />{t.status}</div>
         <motion.h1 className="name" data-zh={lang === 'zh'} ref={nameRef} style={{ y: nameY }}>{finalName}</motion.h1>
         <p className="role">{t.role}</p>
@@ -261,14 +275,17 @@ export default function App() {
 
   useEffect(() => {
     if (matchMedia('(prefers-reduced-motion:reduce)').matches) return
-    const lenis = new Lenis({ duration: 1.15, smoothWheel: true, anchors: true })
-    let raf
-    const loop = (time) => { lenis.raf(time); raf = requestAnimationFrame(loop) }
-    raf = requestAnimationFrame(loop)
-    return () => { cancelAnimationFrame(raf); lenis.destroy() }
+    let lenis, raf
+    try {
+      lenis = new Lenis({ duration: 1.15, smoothWheel: true })
+      const loop = (time) => { lenis.raf(time); raf = requestAnimationFrame(loop) }
+      raf = requestAnimationFrame(loop)
+    } catch (e) { console.warn('Lenis disabled:', e) }
+    return () => { cancelAnimationFrame(raf); try { lenis && lenis.destroy() } catch { /* noop */ } }
   }, [])
 
   return (
+    <ErrorBoundary>
     <div className="shell" data-lang={lang}>
       <ShaderField />
       <Cursor />
@@ -292,5 +309,6 @@ export default function App() {
       </main>
       <footer className="foot"><span>{t.footer}</span><span>© {year} Rongze Gao · rongzegao.com</span></footer>
     </div>
+    </ErrorBoundary>
   )
 }

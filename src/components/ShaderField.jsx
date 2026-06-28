@@ -63,7 +63,15 @@ function compile(gl, type, src) {
 export function ShaderField() {
   const ref = useRef(null)
   useEffect(() => {
-    const cv = ref.current
+    let cleanup
+    try { cleanup = init(ref.current) } catch (e) { console.warn('ShaderField disabled:', e) }
+    return () => { try { cleanup && cleanup() } catch { /* noop */ } }
+  }, [])
+  return <canvas ref={ref} className="shader-field" aria-hidden="true" />
+}
+
+function init(cv) {
+    if (!cv) return
     const gl = cv.getContext('webgl', { antialias: false, alpha: false, powerPreference: 'low-power' })
     if (!gl) return
     const reduce = matchMedia('(prefers-reduced-motion:reduce)').matches
@@ -109,6 +117,4 @@ export function ShaderField() {
     }
     raf = requestAnimationFrame(frame)
     return () => { cancelAnimationFrame(raf); removeEventListener('resize', resize); removeEventListener('pointermove', onMove) }
-  }, [])
-  return <canvas ref={ref} className="shader-field" aria-hidden="true" />
 }

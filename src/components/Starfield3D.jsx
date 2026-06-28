@@ -72,19 +72,8 @@ function init(canvas) {
   const points = new THREE.Points(geo, mat)
   scene.add(points)
 
-  // ── black hole (original): dark event-horizon core + glowing cyan accretion disk ──
-  const hole = new THREE.Group()
-  hole.position.set(0, 0, -1700)
-  const ringTex = ringTexture()
-  const core = new THREE.Mesh(new THREE.SphereGeometry(40, 32, 32), new THREE.MeshBasicMaterial({ color: 0x01030a }))
-  hole.add(core)
-  const disk = new THREE.Mesh(new THREE.RingGeometry(46, 150, 110), new THREE.MeshBasicMaterial({ map: ringTex, transparent: true, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, depthWrite: false }))
-  disk.rotation.x = Math.PI * 0.6
-  hole.add(disk)
-  const glow = new THREE.Mesh(new THREE.RingGeometry(150, 300, 110), new THREE.MeshBasicMaterial({ map: ringTex, transparent: true, opacity: 0.22, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, depthWrite: false }))
-  glow.rotation.x = Math.PI * 0.6
-  hole.add(glow)
-  scene.add(hole)
+  const lookTarget = new THREE.Vector3(0, 0, -900)
+  const docH = () => Math.max(1, document.documentElement.scrollHeight - innerHeight)
 
   const resize = () => { renderer.setSize(innerWidth, innerHeight); camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix() }
   resize(); addEventListener('resize', resize)
@@ -94,28 +83,33 @@ function init(canvas) {
   addEventListener('pointermove', onMove)
 
   const arr = geo.attributes.position.array
-  let last = window.scrollY || 0, speed = 0, raf
+  let last = window.scrollY || 0, speed = 0, t = 0, raf
   const tick = () => {
+    t += 0.016
     const sc = window.scrollY || 0
-    speed += (sc - last) * 0.06; last = sc          // scroll → forward boost
-    speed *= 0.90                                    // decay
-    const drift = (reduce ? 0.25 : 0.9) + Math.min(Math.abs(speed), 60)
+    speed += (sc - last) * 0.06; last = sc           // scroll → forward boost
+    speed *= 0.90                                     // decay
+    const progress = Math.min(1, Math.max(0, sc / docH()))
+    const base = reduce ? 0.25 : 0.8 + Math.sin(progress * Math.PI) * 0.7   // faster mid-page
+    const drift = base + Math.min(Math.abs(speed), 70)
     for (let i = 0; i < COUNT; i++) {
       arr[i * 3 + 2] += drift
-      if (arr[i * 3 + 2] > 40) {                     // passed the camera → recycle to far depth
+      if (arr[i * 3 + 2] > 40) {                      // passed the camera → recycle to far depth
         arr[i * 3 + 2] = -DEPTH
         arr[i * 3] = (Math.random() * 2 - 1) * SPREAD
         arr[i * 3 + 1] = (Math.random() * 2 - 1) * SPREAD
       }
     }
     geo.attributes.position.needsUpdate = true
-    // black hole drifts toward the camera with the flow + recycles; disk swirls
-    hole.position.z += drift
-    if (hole.position.z > 240) hole.position.z = -2600
-    disk.rotation.z += 0.005 + Math.min(Math.abs(speed), 60) * 0.0008
-    glow.rotation.z -= 0.0025
-    camera.rotation.y += (-mouse.x * 0.25 - camera.rotation.y) * 0.04
-    camera.rotation.x += (mouse.y * 0.25 - camera.rotation.x) * 0.04
+    // organic flight: the camera weaves + banks through 3D space, steered a little by the mouse
+    camera.position.x += (Math.sin(t * 0.08) * 70 + mouse.x * 150 - camera.position.x) * 0.03
+    camera.position.y += (Math.cos(t * 0.063) * 45 - mouse.y * 110 - camera.position.y) * 0.03
+    lookTarget.x = Math.sin(t * 0.05) * 150 + mouse.x * 130
+    lookTarget.y = Math.cos(t * 0.043) * 105 - mouse.y * 95
+    camera.lookAt(lookTarget)
+    camera.rotation.z = Math.sin(t * 0.045) * 0.07    // banking roll
+    // scroll tints the universe cyan → blue → violet (stays on-brand)
+    mat.color.setHSL(0.47 + progress * 0.22, 0.78, 0.72)
     renderer.render(scene, camera)
     raf = requestAnimationFrame(tick)
   }
@@ -123,8 +117,6 @@ function init(canvas) {
 
   return () => {
     cancelAnimationFrame(raf); removeEventListener('resize', resize); removeEventListener('pointermove', onMove)
-    geo.dispose(); mat.dispose(); tex.dispose(); ringTex.dispose()
-    core.geometry.dispose(); core.material.dispose(); disk.geometry.dispose(); disk.material.dispose()
-    glow.geometry.dispose(); glow.material.dispose(); renderer.dispose()
+    geo.dispose(); mat.dispose(); tex.dispose(); renderer.dispose()
   }
 }

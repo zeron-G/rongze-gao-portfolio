@@ -4,6 +4,7 @@ import Lenis from 'lenis'
 import './App.css'
 import { Starfield3D } from './components/Starfield3D'
 import { Cursor } from './components/Cursor'
+import { Constellation3D } from './components/Constellation3D'
 import { siteLinks, featuredProjects, tracks, timeline } from './siteData'
 
 class ErrorBoundary extends Component {
@@ -178,34 +179,10 @@ const LINKS = [
 const byId = Object.fromEntries(DOMAINS.map((d) => [d.id, d]))
 
 function Constellation({ t, lang }) {
-  const [active, setActive] = useState('core')
-  const node = byId[active]
   return (
     <motion.section className="block" id="domains" {...reveal}>
       <Eyebrow n="01">{t.sec.domains}</Eyebrow>
-      <div className="const-wrap">
-        <svg viewBox="0 0 100 100" className="const-svg" preserveAspectRatio="xMidYMid meet" aria-label="Domains constellation">
-          {LINKS.map(([a, b], i) => {
-            const A = byId[a], B = byId[b], on = active === a || active === b
-            return <motion.line key={i} x1={A.x} y1={A.y} x2={B.x} y2={B.y} className={'c-edge' + (on ? ' on' : '')}
-              initial={{ pathLength: 0, opacity: 0 }} whileInView={{ pathLength: 1, opacity: 1 }}
-              viewport={{ once: true }} transition={{ duration: 1.0, delay: 0.2 + i * 0.05, ease: 'easeOut' }} />
-          })}
-          {DOMAINS.map((d) => (
-            <g key={d.id} className={'c-node' + (active === d.id ? ' on' : '')} tabIndex={0}
-              onPointerEnter={() => setActive(d.id)} onFocus={() => setActive(d.id)} data-cur>
-              <circle className="c-halo" cx={d.x} cy={d.y} r={d.r * 2.6} />
-              <circle className="c-star" cx={d.x} cy={d.y} r={d.r} />
-              <text x={d.x} y={d.y - d.r - 2.4}>{pick(d.label, lang)}</text>
-            </g>
-          ))}
-        </svg>
-        <div className="const-caption">
-          <span className="c-kicker">{lang === 'zh' ? '领域' : 'domain'}</span>
-          <strong>{pick(node.label, lang)}</strong>
-          <p>{pick(node.blurb, lang)}</p>
-        </div>
-      </div>
+      <Constellation3D lang={lang} />
     </motion.section>
   )
 }

@@ -11,7 +11,9 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [react()],
-    base: isVercel ? '/' : mode === 'production' ? '/rongze-gao-portfolio/' : '/',
+    // Hosted at the domain root on Cloudflare Pages → base must be '/'.
+    // (Was '/rongze-gao-portfolio/' for GitHub Pages' /repo/ subpath, which 404s at root.)
+    base: '/',
     build: {
       rollupOptions: {
         input: {

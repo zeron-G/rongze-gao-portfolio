@@ -2,7 +2,7 @@ import { Component, useEffect, useRef, useState } from 'react'
 import { motion, useReducedMotion, useScroll, useTransform } from 'framer-motion'
 import Lenis from 'lenis'
 import './App.css'
-import { Starfield3D } from './components/Starfield3D'
+import { BlackHoleBackdrop } from './components/BlackHoleBackdrop'
 import { Cursor } from './components/Cursor'
 import { Constellation3D } from './components/Constellation3D'
 import { audio } from './lib/audio'
@@ -354,7 +354,7 @@ export default function App() {
   return (
     <ErrorBoundary>
     <div className="shell" data-lang={lang}>
-      <Starfield3D />
+      <BlackHoleBackdrop />
       <Cursor />
       <div className="grain" aria-hidden="true" />
       <div className="layer">

@@ -5,6 +5,7 @@ import './App.css'
 import { Starfield3D } from './components/Starfield3D'
 import { Cursor } from './components/Cursor'
 import { Constellation3D } from './components/Constellation3D'
+import { audio } from './lib/audio'
 import { siteLinks, featuredProjects, tracks, timeline } from './siteData'
 
 class ErrorBoundary extends Component {
@@ -323,8 +324,21 @@ function Contact({ t }) {
 
 export default function App() {
   const [lang, setLang] = useState('en')
+  const [audioOn, setAudioOn] = useState(false)
   const t = COPY[lang]
   const year = new Date().getFullYear()
+
+  useEffect(() => {
+    let lastEl = null
+    const over = (e) => {
+      const el = e.target.closest('a,button,[data-cur]')
+      if (el && el !== lastEl) { lastEl = el; audio.blip(700 + Math.random() * 260) }
+      else if (!el) lastEl = null
+    }
+    const click = (e) => { if (e.target.closest('a,button,[data-cur]')) audio.blip(430, 0.13, 0.045) }
+    addEventListener('pointerover', over); addEventListener('click', click)
+    return () => { removeEventListener('pointerover', over); removeEventListener('click', click) }
+  }, [])
 
   useEffect(() => {
     if (matchMedia('(prefers-reduced-motion:reduce)').matches) return
@@ -350,6 +364,10 @@ export default function App() {
           <a href="#domains">{t.nav.fields}</a><a href="#work">{t.nav.work}</a><a href="#tracks">{t.nav.tracks}</a><a href="#signals">{t.nav.signals}</a>
           <a href="#path">{t.nav.path}</a><a href="#beyond">{t.nav.beyond}</a><a href="#contact">{t.nav.contact}</a>
         </nav>
+        <button className="snd" data-cur aria-label="toggle sound"
+          onClick={() => { const n = !audioOn; setAudioOn(n); audio.setEnabled(n) }}>
+          <span className={'snd-dot' + (audioOn ? ' on' : '')} />{audioOn ? (lang === 'zh' ? '声音' : 'sound') : (lang === 'zh' ? '静音' : 'muted')}
+        </button>
         <button className="lang" data-cur onClick={() => setLang(lang === 'en' ? 'zh' : 'en')}>{lang === 'en' ? '中文' : 'EN'}</button>
       </header>
       <main>

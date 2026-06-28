@@ -102,6 +102,11 @@ html.has-cursor,html.has-cursor a,html.has-cursor button,html.has-cursor [data-c
 .lang{font-family:var(--mono);font-size:12px;letter-spacing:.12em;color:var(--amber);background:none;border:1px solid var(--line);
   padding:6px 12px;border-radius:2px;cursor:pointer;transition:border-color .18s}
 .lang:hover{border-color:var(--amber)}
+.snd{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ash);background:none;border:1px solid var(--line);padding:6px 11px;border-radius:2px;cursor:pointer;transition:border-color .18s,color .18s}
+.snd:hover{border-color:var(--amber);color:var(--bone)}
+.snd-dot{width:7px;height:7px;border-radius:50%;border:1px solid var(--ash);flex:none;transition:background .2s,border-color .2s}
+.snd-dot.on{background:var(--amber);border-color:var(--amber);box-shadow:0 0 8px var(--amber);animation:pulse 2.4s ease-in-out infinite}
+@media (max-width:680px){.snd{display:none}}
 
 main{display:block}
 

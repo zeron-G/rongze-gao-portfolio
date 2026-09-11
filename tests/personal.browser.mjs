@@ -1,4 +1,4 @@
-import { chromium } from 'playwright';
+const { chromium } = await import(process.env.PLAYWRIGHT_MODULE || 'playwright');
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
 import { readFile, mkdir } from 'node:fs/promises';
@@ -35,6 +35,7 @@ try{
   assert.match(await page.locator('#dialog-title').innerText(),/ANIMA/);await page.keyboard.press('Escape');
   await page.keyboard.press('Control+k');await page.waitForSelector('#search-dialog[open]');
   await page.locator('#search-input').fill('Synapse');await page.locator('[data-search-result]').first().click();
+  await page.waitForFunction(()=>document.querySelector('#detail-dialog')?.open && document.querySelector('#dialog-title')?.textContent==='Synapse');
   assert.equal(await page.locator('#dialog-title').innerText(),'Synapse');await page.keyboard.press('Escape');
   await page.locator('.header [data-language]').click();assert.equal(await page.locator('#flying').count(),1);
   await page.locator('.header [data-language]').click();assert.equal(await page.locator('.mini-project').count(),3);

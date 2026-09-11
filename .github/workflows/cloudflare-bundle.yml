@@ -1,0 +1,48 @@
+name: Cloudflare Pages upload bundle
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/cloudflare-bundle.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  bundle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      SITE_BASE: '/'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: node --test tests/observatory.test.mjs
+      - run: npm run build
+      - name: Verify domain-root entry files and referenced assets
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re, json
+          for name in ('index.html', 'resume.html', 'game.html'):
+              source = (Path('dist') / name).read_text()
+              assert '/rongze-gao-portfolio/' not in source, name
+              for reference in re.findall(r'(?:src|href)="(/[^"?#]+)', source):
+                  assert (Path('dist') / reference.lstrip('/')).is_file(), reference
+          marker = json.loads(Path('dist/release.json').read_text())
+          assert marker['composition'] == 'biography-flight-career-first'
+          print('PASS: homepage, game, CV, root-path assets and personal-first release marker')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Rongze-Gao-Cloudflare-Ready
+          path: dist
+          retention-days: 14
+      - name: Explain the deployment target
+        run: |
+          echo 'This is a prebuilt static bundle for Cloudflare Pages at the domain root.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'It does not deploy anything, modify DNS, or change the existing hosting configuration.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Direct Upload: upload the ZIP contents to the existing rongzegao Pages project as Production.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Git-integrated projects: use npm run build, output dist, production branch main, SITE_BASE=/.' >> "$GITHUB_STEP_SUMMARY"

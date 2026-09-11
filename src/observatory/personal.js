@@ -11,7 +11,9 @@ const arrow = '<span aria-hidden="true">↗</span>';
 let sectionObserver;
 function enhance() {
   const app = $('#app');
-  if (!app || app.dataset.composition === 'personal') return;
+  // The original renderer replaces children, not #app. Check the actual
+  // composition rather than a persistent attribute left on its container.
+  if (!app || app.querySelector('main#main > #about')) return;
   app.dataset.composition = 'personal';
   const zh = document.documentElement.lang.startsWith('zh');
   const text = (en, cn) => zh ? cn : en;

@@ -1,0 +1,26 @@
+name: Observatory quality gate
+on:
+  push:
+    branches: [main, 'design/**']
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Check public content and entry contracts
+        run: |
+          node --check src/observatory/main.js
+          node --check src/observatory/orbit.js
+          node --test tests/observatory.test.mjs
+      - run: npm ci
+      - run: npm run build
+      - name: Check both entry outputs
+        run: test -f dist/index.html && test -f dist/game.html

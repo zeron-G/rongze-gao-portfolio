@@ -1,0 +1,32 @@
+name: Flight refinement review workspace
+on:
+  push:
+    branches: ['design/flight-refinement-2026-09-12']
+    paths: ['.github/workflows/flight-review-workspace.yml']
+permissions:
+  contents: read
+jobs:
+  workspace:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Export public source and installed browser modules only
+        run: |
+          mkdir -p /tmp/flight-review/vendor/addons/environments
+          cp -r src public tests docs /tmp/flight-review/
+          cp index.html resume.html game.html package.json package-lock.json vite.config.js /tmp/flight-review/
+          cp node_modules/three/build/three.module.js node_modules/three/build/three.core.js /tmp/flight-review/vendor/
+          cp node_modules/three/examples/jsm/environments/RoomEnvironment.js /tmp/flight-review/vendor/addons/environments/
+          cp node_modules/lenis/dist/lenis.mjs /tmp/flight-review/vendor/
+          cp node_modules/three/LICENSE /tmp/flight-review/vendor/THREE-LICENSE.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: flight-review-workspace
+          path: /tmp/flight-review
+          retention-days: 3

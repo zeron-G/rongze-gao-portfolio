@@ -1,4 +1,4 @@
-name: Personal homepage - test and publish
+name: Flight log - build and browser review
 on:
   push:
     branches: [main]
@@ -6,77 +6,44 @@ on:
 permissions:
   contents: read
 concurrency:
-  group: personal-pages
+  group: personal-build-review
   cancel-in-progress: true
 jobs:
-  build:
+  review:
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    permissions:
-      contents: read
-      pages: write
-    outputs:
-      configured: ${{ steps.pages.outcome }}
+    env:
+      SITE_BASE: /
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
           cache: npm
-      - name: Read existing Pages configuration
-        id: pages
-        continue-on-error: true
-        uses: actions/configure-pages@v5
-      - name: Select the configured public base path
-        run: echo 'SITE_BASE=${{ steps.pages.outcome == 'success' && format('{0}/', steps.pages.outputs.base_path) || '/rongze-gao-portfolio/' }}' >> "$GITHUB_ENV"
       - run: npm ci
-      - name: Install browser acceptance tooling without changing the lockfile
+      - name: Syntax and content contracts
         run: |
-          npm install --no-save --package-lock=false @playwright/test
-          npx playwright install --with-deps chromium
-          sudo apt-get install -y fonts-noto-cjk
-      - name: Syntax and content checks
-        run: |
-          node --check src/observatory/personal.js
-          node --check src/observatory/resume.js
+          node --check src/flightlog/main.js
+          node --check src/flightlog/scene.js
           node --test tests/observatory.test.mjs
       - run: npm run build
-      - name: Test the actual built site and render previews
-        run: node tests/personal.browser.mjs
-      - name: Retain the tested website, screenshots and printable CVs
+      - name: Install browser tooling outside the application dependency tree
+        run: |
+          npm install --prefix "$RUNNER_TEMP/flight-tools" --no-save --package-lock=false playwright
+          node "$RUNNER_TEMP/flight-tools/node_modules/playwright/cli.js" install --with-deps chromium
+          sudo apt-get install -y fonts-noto-cjk
+          echo "PLAYWRIGHT_MODULE=$RUNNER_TEMP/flight-tools/node_modules/playwright/index.mjs" >> "$GITHUB_ENV"
+      - name: Check the actual built bilingual experience
+        run: node tests/flightlog.browser.mjs
+      - name: Confirm the app lockfile was not changed by test tooling
+        run: git diff --exit-code -- package.json package-lock.json
+      - name: Preserve the root-domain build, screenshots and report
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: personal-homepage-preview
+          name: Off-The-Ground-Cloudflare
           path: dist
           retention-days: 14
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: dist
-      - name: Check the current custom domain without changing DNS
-        continue-on-error: true
-        run: |
-          curl -L --max-time 20 -s -o /tmp/domain.html -w 'Current domain: %{url_effective} HTTP %{http_code}\n' https://rongzegao.com/
-          python -c "import re,pathlib; s=pathlib.Path('/tmp/domain.html').read_text(); print('Public title:', re.findall(r'<title>(.*?)</title>',s)[:1])"
-          curl -L --max-time 15 -s https://rongzegao.com/release.json | head -c 300
-  publish:
-    needs: build
-    if: needs.build.outputs.configured == 'success'
-    runs-on: ubuntu-latest
-    permissions:
-      pages: write
-      id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - name: Publish to the repository's existing GitHub Pages site
-        id: deployment
-        uses: actions/deploy-pages@v4
-      - name: Verify published release marker
-        env:
-          PAGE_URL: ${{ steps.deployment.outputs.page_url }}
-        run: |
-          curl --fail --retry 5 --retry-delay 5 -L "${PAGE_URL%/}/release.json" | tee /tmp/release.json
-          grep -q 'personal-first-2026-09-12' /tmp/release.json
-          echo "Visible preview: $PAGE_URL" >> "$GITHUB_STEP_SUMMARY"
+# rongzegao.com is a Cloudflare Pages project. This workflow intentionally
+# prepares its tested root build; it neither changes DNS nor retries the
+# unrelated, environment-protected GitHub Pages production deployment.

@@ -11,7 +11,7 @@ concurrency:
 jobs:
   review:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 12
     env:
       SITE_BASE: /
     steps:
@@ -25,6 +25,7 @@ jobs:
         run: |
           node --check src/flightlog/main.js
           node --check src/flightlog/scene.js
+          node --check src/flightlog/motion.js
           node --test tests/observatory.test.mjs
       - run: npm run build
       - name: Install browser tooling outside the application dependency tree
@@ -33,17 +34,16 @@ jobs:
           node "$RUNNER_TEMP/flight-tools/node_modules/playwright/cli.js" install --with-deps chromium
           sudo apt-get install -y fonts-noto-cjk
           echo "PLAYWRIGHT_MODULE=$RUNNER_TEMP/flight-tools/node_modules/playwright/index.mjs" >> "$GITHUB_ENV"
-      - name: Check the actual built bilingual experience
-        run: node tests/flightlog.browser.mjs
-      - name: Confirm the app lockfile was not changed by test tooling
+      - name: Check the actual WebGL experience, fallback contracts and motion
+        run: node tests/refinement.browser.mjs
+      - name: Confirm the application lockfile was not changed by test tooling
         run: git diff --exit-code -- package.json package-lock.json
-      - name: Preserve the root-domain build, screenshots and report
+      - name: Preserve the tested Cloudflare build, screenshots and report
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: Off-The-Ground-Cloudflare
+          name: Flight-Refined-Cloudflare
           path: dist
           retention-days: 14
-# rongzegao.com is a Cloudflare Pages project. This workflow intentionally
-# prepares its tested root build; it neither changes DNS nor retries the
-# unrelated, environment-protected GitHub Pages production deployment.
+# Prepares the existing Cloudflare Pages site's root-domain build.
+# Does not alter DNS, hosting settings, or the GitHub profile repository.

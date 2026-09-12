@@ -1,6 +1,7 @@
 import {person,projects,experience,education,publication,honors} from '../observatory/content.js';
 import {createScene} from './scene.js';
 import {wordArt,interestArt,mark} from './art.js';
+import {scrollDriver,ease,clamp01,damp,animateIn,animateOut,crossfade} from './motion.js';
 
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const safe=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -12,7 +13,8 @@ const params=new URLSearchParams(location.search);
 let lang=params.get('lang')||stored('rg.language',navigator.language.startsWith('zh')?'zh':'en');
 if(!['en','zh'].includes(lang))lang='en';
 let motion=!motionQuery.matches&&stored('rg.motion','on')==='on',night=stored('rg.night','off')==='on',sound=false;
-let noteId=null;
+let noteId=null,scrollSystem=null,wakeScene=()=>{};
+let sceneCache=null;
 let dispose=()=>{},selected=0,filter='all',priorHash='#top',dialogOpener=null,menuOpener=null,noticeTimer,context;
 const t=v=>Array.isArray(v)?v[lang==='zh'?1:0]:v;
 const l=(en,zh)=>lang==='zh'?zh:en;
@@ -38,7 +40,7 @@ function render(){
  $('#app').innerHTML=`${topbar()}<main id="main">
  <section class="hero" id="top"><div class="hero-meta"><p>${l('RESEARCHER. STUDENT PILOT.<br>QUANTITATIVE ROOTS. RESTLESS CURIOSITY.','研究者 · 飞行员学员<br>量化是起点，好奇心没有边界。')}</p><p class="hero-location">HANGZHOU ↔ JOHNS HOPKINS<br><span>${l('A QUESTION / THE NEXT FLIGHT.','下一个问题 / 下一段旅程。')}</span></p></div>
  <div class="hero-name"><h1 class="sr-only">Rongze Gao / 高荣泽</h1><div class="first-name">${wordArt('RONGZE')}</div><div class="last-name">${wordArt('GAO')}<span class="name-cn">高<br>荣<br>泽</span></div></div>
- <div class="hero-scene" data-cursor="${l('STEER','转向')}"><canvas id="hero-canvas" aria-hidden="true"></canvas><span class="object-number">RG—001<br>EXPLORATION / FORM STUDY</span><button class="scene-view" data-wire aria-pressed="false">${l('VIEW WIREFRAME','切换线框')} +</button></div>
+ <div class="hero-scene" data-cursor="${l('STEER','转向')}"><canvas id="hero-canvas" aria-hidden="true"></canvas><span class="object-number">RG—002<br>LOW-WING / STUDIO STUDY</span><button class="scene-view" data-wire aria-pressed="false">${l('VIEW WIREFRAME','切换线框')} +</button></div>
  <div class="hero-note"><span class="note-star" aria-hidden="true">✳</span><p>${l('A little closer<br>to the <em>unknown.</em>','向未知，<br><em>再靠近一点。</em>')}</p></div>
  <div class="hero-footer"><a href="#about" class="scroll-link"><span class="down-arrow" aria-hidden="true">↓</span>${l('THE STORY STARTS HERE','故事，从这里开始')}</a><p>${l('MOVE YOUR CURSOR. CHANGE THE PERSPECTIVE.','移动鼠标，换一个视角。')}<br><span>${l('Use the controls below for the flight chapter.','飞行章节也有键盘和触屏控制。')}</span></p><div class="sound-motion"><button data-motion aria-pressed="${motion}">${motion?'◉':'○'} ${l('MOTION','动效')}</button><button data-sound aria-pressed="${sound}">${sound?'♫':'♪'} ${l('SOUND','声音')} ${sound?'ON':'OFF'}</button></div></div></section>
  <div class="chapter-strip" aria-hidden="true"><span>01 / A FEW THINGS ABOUT ME</span><span>↙ NOT A STRAIGHT LINE ↗</span><span>KEEP EXPLORING ↓</span></div>
@@ -63,18 +65,27 @@ function flightCopy(i){return [
  ][i];}
 function mount(){
  const ac=new AbortController(),sig={signal:ac.signal};
- const heroScene=createScene($('#hero-canvas')),flightScene=createScene($('#flight-canvas'),{flight:true});
+ if(sceneCache){$('#hero-canvas').replaceWith(sceneCache.heroCanvas);$('#flight-canvas').replaceWith(sceneCache.flightCanvas);}
+ const heroCanvas=$('#hero-canvas'),flightCanvas=$('#flight-canvas');
+ const heroScene=sceneCache?.hero||createScene(heroCanvas),flightScene=sceneCache?.flight||createScene(flightCanvas,{flight:true});
+ sceneCache={heroCanvas,flightCanvas,hero:heroScene,flight:flightScene};heroScene?.resize();flightScene?.resize();
  let frame=0,heroVisible=true,flightVisible=false,wire=false,bank=0,manual=false,pointer=[0,0],flightPointer=[0,0],lastStage=-1,lastDraw=0,scrollProgress=0,measureDirty=true;
+ const heroName=$('.hero-name'),heroNote=$('.hero-note'),horizon=$('.sky-horizon'),flightWord=$('.flight-word'),flightTitle=$('.flight-title'),flightText=$('#flight-copy'),flightStage=$('#flight-stage'),rail=$('.page-rail i'),steps=$$('.flight-progress i');
+ let smoothedProgress=0,stageAnimation=null,settleUntil=0;
+ let peekTarget=[0,0],peekPosition=[0,0],peekActive=false;
+ const reviewSamples=[];
  let heroDrag=null;
  let heroRect,flightTop=0,flightHeight=1,viewHeight=innerHeight,docHeight=1;
  const hero=$('.hero-scene'),flight=$('#flying'),sticky=$('.flight-sticky');
- const measure=()=>{heroRect=hero.getBoundingClientRect();flightTop=flight.getBoundingClientRect().top+scrollY;flightHeight=flight.offsetHeight;viewHeight=innerHeight;docHeight=document.documentElement.scrollHeight-innerHeight;measureDirty=false;};
+ const measure=()=>{heroRect=hero.getBoundingClientRect();flightTop=flight.getBoundingClientRect().top+scrollY;flightHeight=flight.offsetHeight;viewHeight=innerHeight;docHeight=document.documentElement.scrollHeight-innerHeight;measureDirty=false;scrollSystem?.resize();};
  const request=()=>{if(!frame&&!document.hidden)frame=requestAnimationFrame(tick);};
+ wakeScene=request;scrollSystem=scrollDriver(motion,request);
+ const lockObserver=new MutationObserver(()=>{scrollSystem?.lock(document.body.classList.contains('locked'));request();});lockObserver.observe(document.body,{attributes:true,attributeFilter:['class']});
  const io=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.target===hero)heroVisible=e.isIntersecting;else flightVisible=e.isIntersecting;});request();},{rootMargin:'80px'});io.observe(hero);io.observe(flight);
  const revealObserver=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('entered');revealObserver.unobserve(e.target);}}),{threshold:.10});
  $$('.display-title,.work-heading h2,.research-note h2,.contact-type').forEach(el=>{el.classList.add('type-reveal');revealObserver.observe(el);});
  const ro=new ResizeObserver(()=>{measureDirty=true;request();});ro.observe($('#app'));
- const updateBank=v=>{bank=Math.max(-35,Math.min(35,Number(v)));manual=true;$('#bank').value=bank;$('#bank-value').textContent=`${bank>0?'+':''}${bank}°`;request();};
+ const updateBank=v=>{bank=Math.max(-35,Math.min(35,Number(v)));manual=true;settleUntil=performance.now()+700;$('#bank').value=bank;$('#bank-value').textContent=`${bank>0?'+':''}${bank}°`;request();};
  $('#bank').addEventListener('input',e=>updateBank(e.target.value),sig);
  $$('[data-bank]').forEach(b=>b.addEventListener('click',()=>updateBank(bank+Number(b.dataset.bank)),sig));
  $('[data-reset-flight]').addEventListener('click',()=>{manual=false;bank=0;$('#bank').value=0;$('#bank-value').textContent='0°';request();},sig);
@@ -86,21 +97,45 @@ function mount(){
  hero.addEventListener('pointerleave',()=>{pointer=[0,0];request();},sig);
  $('.airspace').addEventListener('pointermove',e=>{if(!motion||e.pointerType==='touch')return;const r=e.currentTarget.getBoundingClientRect();flightPointer=[(e.clientX-r.left)/r.width-.5,(e.clientY-r.top)/r.height-.5];request();},sig);
  $('.airspace').addEventListener('pointerleave',()=>{flightPointer=[0,0];request();},sig);
- function tick(time){frame=0;if(document.hidden)return;if(measureDirty)measure();
-  scrollProgress=Math.max(0,Math.min(1,(scrollY-flightTop)/Math.max(1,flightHeight-viewHeight)));
+ function tick(time){
+  frame=0;if(document.hidden)return;const started=performance.now();
+  const dt=lastDraw?Math.min(.05,(time-lastDraw)/1000):1/60;
+  scrollSystem?.raf(time);if(measureDirty)measure();
+  const sy=window.scrollY;const panelOpen=document.body.classList.contains('locked');
+  scrollProgress=clamp01((sy-flightTop)/Math.max(1,flightHeight-viewHeight));
+  smoothedProgress=motion?damp(smoothedProgress,scrollProgress,9,dt):scrollProgress;
   const stage=Math.min(2,Math.floor(scrollProgress*3));
-  if(stage!==lastStage){lastStage=stage;$('#flight-copy').textContent=flightCopy(stage);$('#flight-stage').textContent=String(stage+1).padStart(2,'0');$$('.flight-progress i').forEach((e,i)=>e.classList.toggle('active',i<=stage));}
-  const sceneBank=manual?bank:(scrollProgress-.5)*32;
-  if(heroVisible)heroScene?.draw({time,pointer,motion,wire,dark:night});
-  if(flightVisible)flightScene?.draw({time,pointer:flightPointer,motion,progress:scrollProgress,bank:sceneBank});
-  if(flightVisible){$('.sky-horizon').style.transform=`translateY(${motion?(scrollProgress-.5)*42:0}px) rotate(${-sceneBank*.38}deg)`;$('.flight-word').style.transform=`translateX(${motion?(scrollProgress-.5)*80:0}px)`;}
-  $('.page-rail i').style.transform=`scaleY(${docHeight>0?scrollY/docHeight:0})`;
-  if(motion&&heroVisible){const glyphs=$$('.first-name .name-glyph');glyphs.forEach((g,i)=>{const y=Math.sin(time*.0004+i*.8)*1.5+pointer[1]*(i-2.5)*2;g.style.translate=`0 ${y}px`;});}
+  if(stage!==lastStage){
+   lastStage=stage;flightStage.textContent=String(stage+1).padStart(2,'0');
+   stageAnimation?.cancel();flightText.textContent=flightCopy(stage);
+   if(motion)stageAnimation=flightText.animate([{opacity:0,transform:'translateY(9px)'},{opacity:1,transform:'translateY(0)'}],{duration:440,easing:'cubic-bezier(.22,1,.36,1)'});
+   steps.forEach((e,i)=>e.classList.toggle('active',i<=stage));
+  }
+  const departure=motion?clamp01(sy/viewHeight):0;
+  const sceneBank=manual?bank:(smoothedProgress-.5)*26;
+  if(heroVisible&&!panelOpen){
+   heroScene?.draw({time,pointer,motion,wire,dark:night,departure});
+   hero.style.setProperty('--departure-y',`${departure*72}px`);
+   heroName.style.transform=`translate3d(0,${departure*24}px,0)`;
+   heroNote.style.opacity=String(1-departure*.65);
+  }
+  if(flightVisible&&!panelOpen){
+   flightScene?.draw({time,pointer:flightPointer,motion,progress:smoothedProgress,bank:sceneBank});
+   const enter=motion?ease((sy-flightTop+viewHeight*.84)/(viewHeight*.84)):1;
+   const exit=motion?ease((sy-flightTop-flightHeight+viewHeight)/viewHeight):0;
+   sticky.style.borderRadius=`${(1-enter)*Math.min(innerWidth*.08,115)}px ${(1-enter)*Math.min(innerWidth*.08,115)}px ${exit*80}px ${exit*80}px`;
+   horizon.style.transform=`translate3d(0,${motion?(smoothedProgress-.5)*30:0}px,0) rotate(${-sceneBank*.33}deg)`;
+   flightWord.style.transform=`translate3d(${motion?(smoothedProgress-.5)*65:0}px,0,0)`;
+   flightTitle.style.transform=`translate3d(0,${(1-enter)*20}px,0)`;
+  }
+  if(peekActive){peekPosition[0]=damp(peekPosition[0],peekTarget[0],13,dt);peekPosition[1]=damp(peekPosition[1],peekTarget[1],13,dt);peek.style.translate=`${peekPosition[0]}px ${peekPosition[1]}px`;}
+  rail.style.transform=`scaleY(${docHeight>0?sy/docHeight:0})`;
+  if(params.has('diagnostics')){reviewSamples.push(performance.now()-started);if(reviewSamples.length>360)reviewSamples.shift();}
   lastDraw=time;
-  if(motion&&(heroVisible||flightVisible))request();
+  if(motion&&!panelOpen&&(heroVisible||flightVisible||peekActive||time<settleUntil||scrollSystem?.active||Math.abs(smoothedProgress-scrollProgress)>.0003))request();
  }
  addEventListener('scroll',request,{passive:true,signal:ac.signal});addEventListener('resize',()=>{measureDirty=true;request();},{passive:true,signal:ac.signal});
- document.addEventListener('visibilitychange',()=>{if(document.hidden){cancelAnimationFrame(frame);frame=0;}else request();},sig);
+ document.addEventListener('visibilitychange',()=>{if(document.hidden){cancelAnimationFrame(frame);frame=0;}else{lastDraw=0;request();}},sig);
  // Spatial tabletop: pointer and keyboard can both move each illustrated interest.
  const desk=$('.desk');let z=5;
  $$('.specimen').forEach(card=>{let x=0,y=0,drag=null,moved=false;
@@ -116,21 +151,22 @@ function mount(){
  $('[data-reset-desk]').addEventListener('click',()=>$$('.specimen').forEach(c=>c.resetPosition()),sig);
  // Preview panel follows the pointer only within the compact work rows.
  const peek=$('#project-peek');
- $$('.project-row').forEach((row,i)=>{const show=()=>{peek.classList.add('shown');peek.dataset.preview=i;peek.firstElementChild.innerHTML=interestArt(['mind','build','sky'][i]);};
+ $$('.project-row').forEach((row,i)=>{const show=()=>{peek.classList.add('shown');peekActive=true;peek.dataset.preview=i;request();peek.firstElementChild.innerHTML=interestArt(['mind','build','sky'][i]);};
   row.addEventListener('pointerenter',e=>{if(e.pointerType!=='touch'&&innerWidth>760)show();},sig);
-  row.addEventListener('pointermove',e=>{if(innerWidth<=760)return;const r=$('#work').getBoundingClientRect();peek.style.left=`${Math.min(r.width-280,Math.max(0,e.clientX-r.left-90))}px`;peek.style.top=`${e.clientY-r.top-160}px`;},sig);
-  row.addEventListener('pointerleave',()=>peek.classList.remove('shown'),sig);
+  row.addEventListener('pointermove',e=>{if(innerWidth<=760)return;const r=$('#work').getBoundingClientRect();peekTarget=[Math.min(r.width-280,Math.max(0,e.clientX-r.left-90)),e.clientY-r.top-160];if(!motion){peekPosition=[...peekTarget];peek.style.translate=`${peekPosition[0]}px ${peekPosition[1]}px`;}request();},sig);
+  row.addEventListener('pointerleave',()=>{peekActive=false;peek.classList.remove('shown');},sig);
  });
+ if(params.has('diagnostics'))window.__flightReview={stats:()=>({hero:heroScene?.getStats(),flight:flightScene?.getStats(),cpuFrameMs:[...reviewSamples],smoothScroll:!!scrollSystem}),version:'flight-refined'};
  measure();request();
- dispose=()=>{ac.abort();io.disconnect();ro.disconnect();revealObserver.disconnect();cancelAnimationFrame(frame);heroScene?.destroy();flightScene?.destroy();};
+ dispose=()=>{ac.abort();io.disconnect();ro.disconnect();lockObserver.disconnect();revealObserver.disconnect();stageAnimation?.cancel();cancelAnimationFrame(frame);scrollSystem?.destroy();scrollSystem=null;wakeScene=()=>{};delete window.__flightReview;};
 }
 function menu(){
  const d=$('#menu-dialog');menuOpener=document.activeElement;
  d.innerHTML=`<div class="menu-head"><span>RG / INDEX</span><button data-close-menu aria-label="${l('Close menu','关闭目录')}">CLOSE ×</button></div><h2 class="sr-only" id="menu-title">${l('Site navigation','网站目录')}</h2><nav>${[['about','The person','关于我'],['flying','The sky','天空'],['trajectory','The journey','一路走来'],['work','The workshop','作品一角'],['contact','Say hello','打个招呼']].map(([id,en,zh],i)=>`<a href="#${id}" style="--i:${i}"><small>0${i+1}</small><span>${l(en,zh)}</span>${arrow}</a>`).join('')}</nav><div class="menu-bottom"><a href="${resumeURL()}">${l('READ MY CV','阅读履历')} ${arrow}</a>${external(person.github,'GitHub')}${external(person.linkedin,'LinkedIn')}<button data-motion aria-pressed="${motion}">${l('MOTION','动效')} ${motion?'ON':'OFF'}</button></div>`;
- d.showModal();document.body.classList.add('locked');
+ animateIn(d,motion);document.body.classList.add('locked');
 }
-function closeMenu(){const d=$('#menu-dialog');if(d.open)d.close();if(!$('#detail-dialog').open)document.body.classList.remove('locked');menuOpener?.isConnected&&menuOpener.focus({preventScroll:true});}
-function modal(content){const d=$('#detail-dialog');d.innerHTML=`<div class="detail-head"><span>RG / FIELD NOTES</span><div><button data-language>${lang==='zh'?'EN':'中文'}</button><button data-close-detail aria-label="${l('Close detail','关闭详情')}">CLOSE ×</button></div></div>${content}`;if(!d.open)d.showModal();document.body.classList.add('locked');d.scrollTop=0;}
+function closeMenu(immediate=false){const d=$('#menu-dialog');animateOut(d,motion,()=>{if(!$('#detail-dialog').open)document.body.classList.remove('locked');menuOpener?.isConnected&&menuOpener.focus({preventScroll:true});},immediate);}
+function modal(content){const d=$('#detail-dialog');d.innerHTML=`<div class="detail-head"><span>RG / FIELD NOTES</span><div><button data-language>${lang==='zh'?'EN':'中文'}</button><button data-close-detail aria-label="${l('Close detail','关闭详情')}">CLOSE ×</button></div></div>${content}`;animateIn(d,motion);document.body.classList.add('locked');d.scrollTop=0;}
 function openNote(id,opener){noteId=id;dialogOpener=opener;modal(`<article class="personal-note"><p class="eyebrow">${l('A PERSONAL NOTE','一则个人笔记')}</p><h2 id="detail-title">${safe(t(topics[id]))}</h2><div class="note-illustration">${interestArt(id)}</div><p>${safe(t(notes[id]))}</p>${id==='play'?`<a class="solid-link" href="${gameURL()}">${l('ENTER THE GAME','进入游戏')} ${arrow}</a>`:`<a class="solid-link" href="${resumeURL()}">${l('READ MORE ABOUT ME','阅读完整经历')} ${arrow}</a>`}</article>`);}
 function projectDetail(p){noteId=null;modal(`<article class="case-study"><p class="eyebrow">${safe(t(p.type))}</p><h2 id="detail-title">${safe(p.name)}</h2><p class="case-intro">${safe(t(p.summary))}</p><div class="case-meta"><span>${safe(t(p.status))}</span><span>${p.private?l('PRIVATE / DEMO AVAILABLE','私有 / 可演示'):l('PUBLIC SOURCE','公开源码')}</span></div><section><h3>${l('01 / THE QUESTION','01 / 问题')}</h3><p>${safe(t(p.problem))}</p></section><section><h3>${l('02 / WHAT I BUILT','02 / 具体实现')}</h3><ul>${p.build.map(b=>`<li>${safe(t(b))}</li>`).join('')}</ul></section><section><h3>${l('03 / EVIDENCE','03 / 验证与交付')}</h3><p>${safe(t(p.evidence))}</p></section><aside><h3>${l('SCOPE & LIMITS','范围与边界')}</h3><p>${safe(t(p.boundary))}</p></aside><div class="case-links">${p.links.map(([name,url])=>external(url,name)).join('')}</div></article>`);}
 function archive(){noteId=null;modal(`<article class="archive"><p class="eyebrow">THE REST OF THE NOTEBOOK</p><h2 id="detail-title">${l('The workshop.','其余作品。')}</h2><label for="project-search">${l('Find a project, topic or technology','搜索项目、主题或技术')}</label><input id="project-search" type="search" autocomplete="off" placeholder="${l('Memory, Python, robotics…','记忆、Python、机器人…')}"><div id="archive-results"></div></article>`);results('');}
@@ -141,27 +177,27 @@ function route(){let hash;try{hash=decodeURIComponent(location.hash);}catch{hash
  else if(hash==='#archive')archive();
  else {if($('#detail-dialog').open)closeDetail(false);priorHash=hash||'#top';}
 }
-function closeDetail(changeURL=true){noteId=null;const d=$('#detail-dialog');d.close();if(!$('#menu-dialog').open)document.body.classList.remove('locked');if(changeURL&&/^#(project\/|archive)/.test(location.hash)){try{history.replaceState(null,'',location.pathname+location.search+priorHash);}catch{location.hash=priorHash;}}dialogOpener?.isConnected&&dialogOpener.focus({preventScroll:true});}
+function closeDetail(changeURL=true,immediate=false){noteId=null;const d=$('#detail-dialog');if(changeURL&&/^#(project\/|archive)/.test(location.hash)){try{history.replaceState(null,'',location.pathname+location.search+priorHash);}catch{location.hash=priorHash;}}animateOut(d,motion,()=>{if(!$('#menu-dialog').open)document.body.classList.remove('locked');dialogOpener?.isConnected&&dialogOpener.focus({preventScroll:true});},immediate);}
 function notify(text){$('#toast').textContent=text;$('#toast').classList.add('show');clearTimeout(noticeTimer);noticeTimer=setTimeout(()=>$('#toast').classList.remove('show'),2600);}
 function clickSound(){if(!sound)return;try{context??=new(window.AudioContext||window.webkitAudioContext)();context.resume();const o=context.createOscillator(),g=context.createGain();o.frequency.value=520;g.gain.setValueAtTime(.02,context.currentTime);g.gain.exponentialRampToValueAtTime(.0001,context.currentTime+.065);o.connect(g);g.connect(context.destination);o.start();o.stop(context.currentTime+.075);o.onended=()=>{o.disconnect();g.disconnect();};}catch{sound=false;}}
-function changeLanguage(){const y=scrollY,openNoteId=noteId;lang=lang==='en'?'zh':'en';store('rg.language',lang);try{const url=new URL(location.href);url.searchParams.set('lang',lang);history.replaceState(null,'',url);}catch{/* file previews */}closeMenu();render();if(openNoteId)openNote(openNoteId,null);else route();scrollTo({top:y,behavior:'instant'});}
+function changeLanguage(){const y=scrollY,openNoteId=noteId;lang=lang==='en'?'zh':'en';store('rg.language',lang);try{const url=new URL(location.href);url.searchParams.set('lang',lang);history.replaceState(null,'',url);}catch{}closeMenu(true);crossfade(()=>{render();if(openNoteId)openNote(openNoteId,null);else route();scrollTo({top:y,behavior:'instant'});scrollSystem?.sync();},motion);}
 document.addEventListener('click',async e=>{
  const a=e.target.closest('a,button');if(!a)return;clickSound();
  if(a.hasAttribute('data-menu')){menu();return;}
  if(a.hasAttribute('data-close-menu')){closeMenu();return;}
  if(a.hasAttribute('data-close-detail')){closeDetail();return;}
  if(a.hasAttribute('data-language')){changeLanguage();return;}
- if(a.hasAttribute('data-theme')){night=!night;store('rg.night',night?'on':'off');const y=scrollY;render();scrollTo({top:y,behavior:'instant'});return;}
- if(a.hasAttribute('data-motion')){motion=!motion;store('rg.motion',motion?'on':'off');const y=scrollY;closeMenu();render();scrollTo({top:y,behavior:'instant'});return;}
+ if(a.hasAttribute('data-theme')){night=!night;store('rg.night',night?'on':'off');crossfade(()=>{document.documentElement.dataset.theme=night?'night':'paper';a.setAttribute('aria-pressed',night);wakeScene();},motion);return;}
+ if(a.hasAttribute('data-motion')){motion=!motion;store('rg.motion',motion?'on':'off');const y=scrollY;closeMenu(true);render();scrollTo({top:y,behavior:'instant'});scrollSystem?.sync();return;}
  if(a.hasAttribute('data-sound')){sound=!sound;a.setAttribute('aria-pressed',sound);a.textContent=`${sound?'♫':'♪'} ${l('SOUND','声音')} ${sound?'ON':'OFF'}`;clickSound();return;}
  if(a.hasAttribute('data-note')){openNote(a.dataset.note,a);return;}
  if(a.hasAttribute('data-archive')){dialogOpener=a;archive();return;}
  if(a.hasAttribute('data-copy')){try{await navigator.clipboard.writeText(person.email);notify(l('Email copied. Over to you.','邮箱已复制，换你了。'));}catch{notify(person.email);}return;}
- if(a.closest('#menu-dialog')&&a.hash){closeMenu();}
+ if(a.closest('#menu-dialog')&&a.hash){closeMenu(true);}
  if(a.getAttribute('href')?.startsWith('#')){
   e.preventDefault();const hash=a.getAttribute('href');
   if(hash.startsWith('#project/')){dialogOpener=a;const p=projects.find(p=>p.id===hash.slice(9));if(p)projectDetail(p);}
-  else {const target=document.getElementById(hash.slice(1));if(target){priorHash=hash;target.scrollIntoView({behavior:motion?'smooth':'instant',block:'start'});}}
+  else {const target=document.getElementById(hash.slice(1));if(target){priorHash=hash;scrollSystem?.to(target);}}
   try{history.pushState(null,'',location.pathname+location.search+hash);}catch{/* In-memory and file previews still work without history. */}
  }
 
@@ -172,6 +208,6 @@ $('#menu-dialog').addEventListener('cancel',e=>{e.preventDefault();closeMenu();}
 for(const id of ['menu-dialog','detail-dialog'])$('#'+id).addEventListener('click',e=>{const d=e.currentTarget;if(e.target!==d)return;const r=d.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)id==='menu-dialog'?closeMenu():closeDetail();});
 addEventListener('hashchange',route);addEventListener('popstate',route);
 motionQuery.addEventListener('change',e=>{motion=!e.matches;render();route();});
-addEventListener('pagehide',()=>{dispose();context?.close();context=null;});
+addEventListener('pagehide',()=>{dispose();sceneCache?.hero?.destroy();sceneCache?.flight?.destroy();sceneCache=null;context?.close();context=null;});
 addEventListener('pageshow',e=>{if(e.persisted){render();route();}});
 render();route();

@@ -13,7 +13,7 @@ const out=path.join(root,'previews');await mkdir(out,{recursive:true});
 const errors=[],failures=[],layouts=[];let stats=null;
 try{
  for(const width of [390,768,1440,1920])for(const lang of ['en','zh']){
-  const context=await browser.newContext({viewport:{width,height:950},reducedMotion:'reduce'});
+  const context=await browser.newContext({viewport:{width,height:width===390?844:950},reducedMotion:'reduce'});
   const page=await context.newPage();page.setDefaultTimeout(20000);page.on('pageerror',e=>errors.push(`${width}/${lang}: ${e.message}`));
   page.on('response',r=>{if(r.url().startsWith(origin)&&r.status()>=400)failures.push(r.url());});
   await page.goto(`${origin}/?lang=${lang}&diagnostics=1`);await page.waitForSelector('#hero-canvas[data-renderer="webgl2"]');await page.waitForTimeout(180);
@@ -47,7 +47,9 @@ try{
  await page.locator('.masthead [data-language]').click();await page.waitForFunction(()=>document.documentElement.lang==='zh-CN');await page.waitForTimeout(600);
  assert.equal(await page.locator('#flying').count(),1);
  await page.locator('.masthead [data-language]').click();await page.waitForFunction(()=>document.documentElement.lang==='en');await page.waitForTimeout(500);
- await page.mouse.wheel(0,530);await page.waitForTimeout(1200);assert.ok(await page.evaluate(()=>scrollY>350));
+ await page.waitForFunction(()=>!document.body.classList.contains('locked')&&!document.getAnimations().some(a=>String(a.effect?.pseudoElement||'').includes('view-transition')&&a.playState==='running'));
+ await page.mouse.move(650,670);await page.mouse.wheel(0,530);
+ await page.waitForFunction(()=>scrollY>350,{},{timeout:12000});assert.ok(await page.evaluate(()=>scrollY>350));
  const top=await page.locator('#flying').evaluate(e=>e.offsetTop);
  await page.evaluate(y=>scrollTo({top:y,behavior:'instant'}),top-420);await page.waitForTimeout(300);await page.screenshot({path:path.join(out,'chapter-entry.png')});
  await page.evaluate(y=>scrollTo({top:y,behavior:'instant'}),top+480);await page.waitForTimeout(700);await page.screenshot({path:path.join(out,'flight-motion.png')});

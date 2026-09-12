@@ -79,7 +79,7 @@ export function createScene(canvas,{flight=false}={}){
  let renderer;
  try{renderer=new THREE.WebGLRenderer({canvas,alpha:true,antialias:true,powerPreference:'high-performance'});}catch{
   const img=document.createElement('img');img.src='data:image/svg+xml,'+encodeURIComponent(fallbackSVG);img.className='aircraft-fallback';img.alt='';img.setAttribute('aria-hidden','true');canvas.after(img);canvas.dataset.renderer='static-fallback';canvas.dataset.rendered='1';
-  return {draw(){},resize(){},destroy(){img.remove();},getStats(){return{renderer:'static-fallback'};}};
+  return {draw(){},resize(){if(!img.isConnected&&canvas.isConnected)canvas.after(img);},destroy(){img.remove();},getStats(){return{renderer:'static-fallback'};}};
  }
  renderer.setClearColor(0,0);renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.12;
  const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(31,1,.1,100);
@@ -89,7 +89,7 @@ export function createScene(canvas,{flight=false}={}){
  const fill=new THREE.DirectionalLight(0x9bbdff,2.0);fill.position.set(6,3,3);scene.add(fill);
  const rim=new THREE.DirectionalLight(0xffffff,1.7);rim.position.set(-4,1,6);scene.add(rim);
  let environment,pmrem;
- try{pmrem=new THREE.PMREMGenerator(renderer);const room=new RoomEnvironment();environment=pmrem.fromScene(room,.045);scene.environment=environment.texture;scene.environmentIntensity=.65;room.dispose();pmrem.dispose();pmrem=null;}catch{}
+ try{pmrem=new THREE.PMREMGenerator(renderer);const room=new RoomEnvironment();environment=pmrem.fromScene(room,.045,.1,100,{size:128});scene.environment=environment.texture;scene.environmentIntensity=.65;room.dispose();pmrem.dispose();pmrem=null;}catch{}
  let w=1,h=1,disposed=false,lost=false,lastTime=0,x=0,y=0,bankNow=0,progressNow=0,clock=0,dpr=1,qualityChanged=false,slowFrames=0,lastWire=false;
  const resize=()=>{if(disposed||lost)return;const r=canvas.getBoundingClientRect();w=Math.max(1,r.width);h=Math.max(1,r.height);dpr=Math.min(devicePixelRatio||1,qualityChanged?1:(innerWidth<650?1.35:1.6));renderer.setPixelRatio(dpr);renderer.setSize(w,h,false);camera.aspect=w/h;
   const aspect=w/h;const distance=aspect<1.2?20.4:17.5;camera.position.set(distance*.55,distance*.44,-distance*.76);camera.lookAt(0,-.02,0);camera.updateProjectionMatrix();canvas.dataset.renderer='webgl2';canvas.dataset.rendered='1';};
@@ -104,7 +104,7 @@ export function createScene(canvas,{flight=false}={}){
   const tour=flight?progressNow:0;
   model.root.rotation.set((flight?.02:-.025)+y*.10,(flight?-.12+tour*.37:-.11)+x*.27,(flight?-.03:.035)-bankNow*Math.PI/180*.62);
   model.root.position.set(flight?Math.sin(tour*Math.PI)*.28:departure*.35,(motion?Math.sin(clock*.63)*.034:0)+(flight?Math.sin(tour*Math.PI)*.10:departure*.18),0);
-  const scale=flight?1.02+Math.sin(tour*Math.PI)*.035:1.06;model.root.scale.setScalar(scale);
+  const scale=(flight?1.02+Math.sin(tour*Math.PI)*.035:1.06)*(innerWidth<650?.79:1);model.root.scale.setScalar(scale);
   model.prop.rotation.z=motion?clock*(flight?11.2:1.1):.30;model.disc.material.opacity=motion&&flight?.055:0;
   if(lastWire!==wire){model.setWire(wire);lastWire=wire;}
   renderer.toneMappingExposure=flight?1.20:dark?1.15:1.08;

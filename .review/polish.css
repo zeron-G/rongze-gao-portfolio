@@ -1,0 +1,39 @@
+/* REFINEMENT 02 — one motion clock, a light touring aircraft, composed cuts. */
+html.lenis,html.lenis body{height:auto}
+.lenis.lenis-smooth{scroll-behavior:auto!important}
+.lenis.lenis-smooth [data-lenis-prevent]{overscroll-behavior:contain}
+.lenis.lenis-stopped{overflow:hidden}
+html{scrollbar-gutter:stable}
+.hero-scene{translate:0 var(--departure-y,0px);will-change:translate;isolation:isolate}
+.hero-scene:before{content:'';position:absolute;left:16%;right:12%;top:73%;height:16%;background:radial-gradient(ellipse,#162b471c,transparent 66%);pointer-events:none;z-index:-1}
+.hero-scene canvas{position:relative;z-index:1}
+.aircraft-fallback{position:absolute;width:100%;height:100%;inset:0;object-fit:contain;pointer-events:none}
+.object-number{z-index:3;letter-spacing:1.25px;color:var(--muted)}
+.scene-view{z-index:5}
+.hero-name,.hero-note{will-change:transform,opacity}
+@keyframes aircraft-settle{from{opacity:0;transform:translate3d(26px,18px,0) scale(.98)}to{opacity:1;transform:translate3d(0,0,0) scale(1)}}
+html[data-motion=on] .hero-scene{animation:aircraft-settle 1.25s .13s both cubic-bezier(.22,1,.36,1)}
+.flight{background:var(--paper);isolation:isolate}
+.flight-sticky{background:#2446e4;will-change:border-radius;overflow:clip}
+.sky-horizon{transition:none;will-change:transform}
+.flight-word,.flight-title{will-change:transform}
+#flight-copy{min-height:86px;will-change:opacity,transform}
+.flight-reading{align-items:center}
+.airspace:before{content:'';position:absolute;left:-8%;right:-8%;top:48%;height:25%;background:radial-gradient(ellipse at 50% 100%,#b6c8ff0d,transparent 68%);pointer-events:none;z-index:0}
+#project-peek{left:0;top:0;will-change:translate,opacity;transition:opacity .24s,transform .4s cubic-bezier(.22,1,.36,1)}
+.specimen{transition:box-shadow .35s ease,transform .52s cubic-bezier(.22,1,.36,1)}
+.specimen.dragging{transition:box-shadow .2s ease;rotate:1.8deg}
+.specimen:not(.dragging){rotate:0deg;transition:rotate .65s cubic-bezier(.22,1,.36,1),box-shadow .35s ease,transform .52s cubic-bezier(.22,1,.36,1)}
+.project-row{transition:padding .55s cubic-bezier(.22,1,.36,1),color .3s ease}
+.project-row>b{transition:transform .55s cubic-bezier(.22,1,.36,1)}
+.project-row:hover>b{transform:translate(3px,-3px)}
+dialog[open]{animation:none}
+dialog.closing{pointer-events:none}
+#menu-dialog nav a{animation-duration:.78s;animation-delay:calc(.08s + var(--i)*.055s)}
+::view-transition-old(root){animation:palette-out .28s ease both}
+::view-transition-new(root){animation:palette-in .42s cubic-bezier(.22,1,.36,1) both}
+@keyframes palette-out{to{opacity:0}}
+@keyframes palette-in{from{opacity:0}to{opacity:1}}
+@media(min-width:901px){.hero-scene{left:27%;right:-1%;top:100px;bottom:95px}.hero-note{bottom:152px;right:7%}.scene-view{right:10%;bottom:12%}.object-number{top:9%;right:8%}}
+@media(max-width:650px){.hero-scene{left:-14%;right:-14%;top:215px;bottom:130px}.hero-note{bottom:128px}.scene-view{right:17%;bottom:7%}.object-number{top:6%;right:16%}.flight-reading{align-items:stretch}.airspace{top:24%;height:41%;left:-6%;right:-6%}#flight-copy{min-height:65px}.flight-word{bottom:3%}}
+@media(prefers-reduced-motion:reduce){.hero-scene,.hero-name,.flight-sticky,.flight-word,.flight-title,.sky-horizon{will-change:auto!important}::view-transition-old(root),::view-transition-new(root){animation:none!important}}
